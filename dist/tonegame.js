@@ -3,24 +3,32 @@
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
 var $debugcanvas = null;
-var staffCanvas, gameCanvas, $noteElem, $numElem;
+var staffCanvas, gameCanvas, $noteElem, $numElem, canvasWidth;
 var pitchArray = new Array(384).fill(250);
 
 $(document).ready(function () {
   let $staff = $("#staff");
-  staffCanvas = $staff[0].getContext("2d");
   let $game = $("#game");
+  let $container = $(".container");
+  $noteElem = $("#note");
+  $numElem = $("#number");
+
+  let w = window.innerWidth;
+  canvasWidth = Math.min(w - 20, 800);
+  $container.width(canvasWidth);
+  $staff[0].width = canvasWidth;
+  $game[0].width = canvasWidth;
+
   gameCanvas = $game[0].getContext("2d");
   gameCanvas.strokeStyle = "black";
   gameCanvas.lineWidth = 5;
   drawCanvas();
-  $noteElem = $("#note");
-  $numElem = $("#number");
+  staffCanvas = $staff[0].getContext("2d");
   drawStaff();
 });
 
 function drawStaff() {
-  staffCanvas.clearRect(0, 0, 800, 500);
+  staffCanvas.clearRect(0, 0, canvasWidth, 500);
   const colors = [
     "green",
     "gray",
@@ -42,7 +50,7 @@ function drawStaff() {
   for (let i = 0; i < rows; i++) {
     staffCanvas.fillStyle = colors[i % 12];
     staffCanvas.globalAlpha = 0.4;
-    staffCanvas.fillRect(0, (rows - i - 1) * rowHeight, 800, rowHeight);
+    staffCanvas.fillRect(0, (rows - i - 1) * rowHeight, canvasWidth, rowHeight);
     staffCanvas.fillStyle = "black";
     staffCanvas.font = "18px Arial";
     staffCanvas.globalAlpha = 1;
@@ -57,7 +65,7 @@ function drawStaff() {
 }
 
 function drawCanvas() {
-  gameCanvas.clearRect(0, 0, 800, 500);
+  gameCanvas.clearRect(0, 0, canvasWidth, 500);
   gameCanvas.strokeStyle = "black";
   gameCanvas.beginPath();
   gameCanvas.moveTo(0, pitchArray[0]);

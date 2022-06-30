@@ -5,22 +5,31 @@ body {
   background-color: #348781;
 }
 .container {
-  display: block;
+  margin: 0 auto;
+  width: 800px;
+  height: 700px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid #000;
+  border-radius: 10px;
+  margin-top: 2px;
 }
 
 #note {
   font-size: 40px;
+  width: 100px;
   height: 50px;
   text-align: left;
 }
 
 #number {
   height: 50px;
+  width: 100px;
   text-align: left;
   font-size: 40px;
 }
 
-#detector {
+.detector {
   width: 300px;
   height: 100px;
   border: 4px solid gray;
@@ -30,16 +39,16 @@ body {
 }
 
 canvas#game {
-  position: absolute;
-  left: 20px;
-  top: 160px;
+  display: block;
+  position: relative;
+  top: -500px;
   z-index: 3;
 }
 
 canvas#staff {
-  position: absolute;
-  left: 20px;
-  top: 160px;
+  display: block;
+  position: relative;
+  top: 0;
   z-index: 2;
   opacity: 1;
 }

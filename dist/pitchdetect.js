@@ -118,7 +118,7 @@ function autoCorrelate(buf, sampleRate) {
     rms += val * val;
   }
   rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.01)
+  if (rms < 0.1)
     // not enough signal
     return -1;
 
@@ -154,7 +154,7 @@ function autoCorrelate(buf, sampleRate) {
     }
     lastCorrelation = correlation;
   }
-  if (best_correlation > 0.01) {
+  if (best_correlation > 0.1) {
     // console.log("f = " + sampleRate/best_offset + "Hz (rms: " + rms + " confidence: " + best_correlation + ")")
     return sampleRate / best_offset;
   }
