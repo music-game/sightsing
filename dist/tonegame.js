@@ -4,7 +4,8 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
 var $debugcanvas = null;
 var staffCanvas, gameCanvas, $noteElem, $numElem, canvasWidth;
-var pitchArray = new Array(384).fill(250);
+var pitchArray = [250];
+var myPitch = 250;
 
 $(document).ready(function () {
   let $staff = $("#staff");
@@ -21,11 +22,16 @@ $(document).ready(function () {
 
   gameCanvas = $game[0].getContext("2d");
   gameCanvas.strokeStyle = "black";
-  gameCanvas.lineWidth = 5;
-  drawCanvas();
+  gameCanvas.lineWidth = 1;
+  drawGame();
   staffCanvas = $staff[0].getContext("2d");
   drawStaff();
 });
+
+function startGame() {
+  window.setInterval(updatePitch, 5);
+  window.setInterval(drawGame, 30);
+}
 
 function drawStaff() {
   staffCanvas.clearRect(0, 0, canvasWidth, 500);
@@ -58,20 +64,27 @@ function drawStaff() {
   }
   staffCanvas.globalAlpha = 1;
   staffCanvas.fillStyle = "black";
-  staffCanvas.moveTo(200, 0);
-  staffCanvas.lineTo(200, 500);
+  staffCanvas.moveTo(100, 0);
+  staffCanvas.lineTo(100, 500);
 
   staffCanvas.stroke();
 }
 
-function drawCanvas() {
+function drawGame() {
+  // console.log(pitchArray);
+  var total = 0;
+  for (var i = 0; i < pitchArray.length; i++) {
+    total += pitchArray[i];
+  }
+  myPitch = total / pitchArray.length;
+  pitchArray = [myPitch, myPitch, myPitch, myPitch, myPitch, myPitch];
   gameCanvas.clearRect(0, 0, canvasWidth, 500);
   gameCanvas.strokeStyle = "black";
   gameCanvas.beginPath();
-  gameCanvas.moveTo(0, pitchArray[0]);
-  for (var i = 1; i < pitchArray.length; i++) {
-    gameCanvas.lineTo(i, pitchArray[i]);
-  }
+  gameCanvas.moveTo(100, myPitch);
+  gameCanvas.lineTo(80, myPitch - 10);
+  gameCanvas.lineTo(80, myPitch + 10);
+  gameCanvas.fill();
   gameCanvas.stroke();
 }
 
@@ -79,7 +92,7 @@ var rafID = null;
 
 var MIN_SAMPLES = 0; // will be initialized when AudioContext is created.
 
-function updatePitch(time) {
+function updatePitch() {
   ac = getPitch();
   if (ac == -1) {
     $noteElem.html("--");
@@ -94,14 +107,10 @@ function updatePitch(time) {
     $numElem.html(note);
     // 45-57-69
     let noteScaled = 500 - (x - 45) * 20;
-    pitchArray.push(noteScaled);
-    pitchArray.shift();
-    drawCanvas();
-  }
+    let p1 = Math.min(Math.max(noteScaled, 0), 500);
 
-  if (!window.requestAnimationFrame)
-    window.requestAnimationFrame = window.webkitRequestAnimationFrame;
-  rafID = window.requestAnimationFrame(updatePitch);
+    pitchArray.push(p1);
+  }
 }
 
 // C4 = 60 A3 = 57
