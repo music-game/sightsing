@@ -29,15 +29,17 @@ var analyser = null;
 var theBuffer = null;
 var mediaStreamSource = null;
 
-window.onload = function () {
-  audioContext = new AudioContext();
-  MAX_SIZE = Math.max(4, Math.floor(audioContext.sampleRate / 5000)); // corresponds to a 5kHz signal
-};
+// window.onload = function () {
+//   audioContext = new AudioContext();
+//   MAX_SIZE = Math.max(4, Math.floor(audioContext.sampleRate / 5000)); // corresponds to a 5kHz signal
+// };
 
 async function getMedia() {
   let stream = null;
 
   try {
+    audioContext = new AudioContext();
+    MAX_SIZE = Math.max(4, Math.floor(audioContext.sampleRate / 5000)); // corresponds to a 5kHz signal
     stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
       video: false,
