@@ -57,6 +57,11 @@ async function getMedia() {
   }
 }
 
+// async function stopMedia() {
+//   stream.close();
+//   audioContext.close();
+// }
+
 var rafID = null;
 var buflen = 1024;
 var buf = new Float32Array(buflen);
