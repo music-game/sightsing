@@ -1,0 +1,45 @@
+body {
+  font: 14pt "Alike", sans-serif;
+}
+.droptarget {
+  background-color: #348781;
+}
+.container {
+  display: block;
+}
+
+#note {
+  font-size: 100px;
+  height: 120px;
+  text-align: left;
+}
+
+#number {
+  height: 100px;
+  text-align: left;
+  font-size: 100px;
+}
+
+#detector {
+  width: 300px;
+  height: 300px;
+  border: 4px solid gray;
+  border-radius: 8px;
+  text-align: center;
+  padding-top: 10px;
+}
+
+canvas#game {
+  position: absolute;
+  left: 20px;
+  top: 500px;
+  z-index: 3;
+}
+
+canvas#staff {
+  position: absolute;
+  left: 20px;
+  top: 500px;
+  z-index: 2;
+  opacity: 1;
+}

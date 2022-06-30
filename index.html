@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="shortcut icon" href="#" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+    />
+    <link rel="stylesheet" href="./dist/style.css" />
+    <link
+      href="http://fonts.googleapis.com/css?family=Alike"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <title>Sight Singing Game</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="dist/tonegame.js"></script>
+    <script src="dist/pitchdetect.js"></script>
+    <script src="dist/audiosynth.js"></script>
+  </head>
+  <body>
+    <button onclick="getMedia()">Start</button>
+
+    <div id="detector" class="vague">
+      <div class="container">
+        <div id="note">--</div>
+        <div id="number">--</div>
+      </div>
+    </div>
+
+    <canvas id="staff" width="800px" height="500px"></canvas>
+    <canvas id="game" width="800px" height="500px"></canvas>
+  </body>
+</html>
