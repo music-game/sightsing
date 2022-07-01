@@ -38,17 +38,12 @@ async function getMedia() {
 
     const arrayUInt = new Uint8Array(analyser.frequencyBinCount);
     analyser.getByteTimeDomainData(arrayUInt);
-    // detectPitch = Pitchfinder.YIN({
-    //   threshold: 0.1,
-    //   sampleRate: sampleRate,
-    //   probabilityThreshold: 0.1,
-    // });
     detectPitch = Pitchfinder.AMDF({
       sampleRate: sampleRate,
-      minFrequency: 82,
+      minFrequency: 78,
       maxFrequency: 1000,
       ratio: 5,
-      sensitivity: 0.1,
+      sensitivity: 0.2,
     });
   } catch (err) {
     console.log("failed to get stream");
@@ -138,28 +133,25 @@ function drawGame() {
   gameCanvas.clearRect(0, 0, canvasWidth, 500);
   gameCanvas.strokeStyle = "black";
   gameCanvas.beginPath();
-  gameCanvas.moveTo(100, myPitch);
-  gameCanvas.lineTo(80, myPitch - 10);
-  gameCanvas.lineTo(80, myPitch + 10);
+  gameCanvas.moveTo(100, myPitch - 10);
+  gameCanvas.lineTo(80, myPitch);
+  gameCanvas.lineTo(80, myPitch - 20);
   gameCanvas.fill();
   gameCanvas.stroke();
 }
-
-var rafID = null;
-
-var MIN_SAMPLES = 0; // will be initialized when AudioContext is created.
 
 function updatePitch() {
   const array32 = new Float32Array(analyser.fftSize);
   analyser.getFloatTimeDomainData(array32);
   // console.log(array32);
 
-  const pitch = detectPitch(array32);
-  console.log(pitch);
+  var pitch = detectPitch(array32);
 
   if (pitch == null) {
     $noteElem.html("--");
   } else {
+    // pitch = pitch * 0.99;
+    console.log(pitch);
     var note = noteFromPitch(pitch);
     let noteName = noteStrings[note % 12];
     let noteNumber = Math.floor(note / 12) - 1;
@@ -178,6 +170,7 @@ function updatePitch() {
 // C4 = 60 A3 = 57
 function noteNumFromPitch(frequency) {
   var noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
+  console.log(noteNum + 69);
   return noteNum + 69;
 }
 
