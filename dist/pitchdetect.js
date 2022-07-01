@@ -22,40 +22,40 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-window.AudioContext = window.AudioContext || window.webkitAudioContext;
+// window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
-var audioContext = null;
-var analyser = null;
-var theBuffer = null;
-var mediaStreamSource = null;
+// var audioContext = null;
+// var analyser = null;
+// var theBuffer = null;
+// var mediaStreamSource = null;
 
 // window.onload = function () {
 //   audioContext = new AudioContext();
 //   MAX_SIZE = Math.max(4, Math.floor(audioContext.sampleRate / 5000)); // corresponds to a 5kHz signal
 // };
 
-async function getMedia() {
-  let stream = null;
+// async function getMedia() {
+//   let stream = null;
 
-  try {
-    audioContext = new AudioContext();
-    MAX_SIZE = Math.max(4, Math.floor(audioContext.sampleRate / 5000)); // corresponds to a 5kHz signal
-    stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: false,
-    });
-    // Create an AudioNode from the stream.
-    mediaStreamSource = audioContext.createMediaStreamSource(stream);
+//   try {
+//     audioContext = new AudioContext();
+//     MAX_SIZE = Math.max(4, Math.floor(audioContext.sampleRate / 5000)); // corresponds to a 5kHz signal
+//     stream = await navigator.mediaDevices.getUserMedia({
+//       audio: true,
+//       video: false,
+//     });
+//     // Create an AudioNode from the stream.
+//     mediaStreamSource = audioContext.createMediaStreamSource(stream);
 
-    // Connect it to the destination.
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 2048;
-    mediaStreamSource.connect(analyser);
-    updatePitch();
-  } catch (err) {
-    console.log("failed to get stream");
-  }
-}
+//     // Connect it to the destination.
+//     analyser = audioContext.createAnalyser();
+//     analyser.fftSize = 2048;
+//     mediaStreamSource.connect(analyser);
+//     updatePitch();
+//   } catch (err) {
+//     console.log("failed to get stream");
+//   }
+// }
 
 // async function stopMedia() {
 //   stream.close();

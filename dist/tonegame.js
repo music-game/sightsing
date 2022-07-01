@@ -1,11 +1,53 @@
 /// <reference path="../typings/globals/jquery/index.d.ts" />
 
+const Pitchfinder = require("pitchfinder");
+const { start } = require("tone");
+
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
+
+var audioContext = null;
+var analyser = null;
+var mediaStreamSource = null;
+var detectPitch = null;
 
 var $debugcanvas = null;
 var staffCanvas, gameCanvas, $noteElem, $numElem, canvasWidth;
 var pitchArray = [250];
 var myPitch = 250;
+
+async function getMedia() {
+  let stream = null;
+
+  try {
+    audioContext = new AudioContext();
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: false,
+    });
+    // Create an AudioNode from the stream.
+    mediaStreamSource = audioContext.createMediaStreamSource(stream);
+
+    sampleRate = audioContext.sampleRate;
+    console.log(sampleRate);
+
+    // Connect it to the destination.
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 2048;
+    mediaStreamSource.connect(analyser);
+
+    const arrayUInt = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteTimeDomainData(arrayUInt);
+    detectPitch = Pitchfinder.AMDF({
+      sampleRate: sampleRate,
+      minFrequency: 78,
+      maxFrequency: 1000,
+      ratio: 5,
+      sensitivity: 0.1,
+    });
+  } catch (err) {
+    console.log("failed to get stream");
+  }
+}
 
 $(document).ready(function () {
   let $staff = $("#staff");
@@ -26,6 +68,15 @@ $(document).ready(function () {
   drawGame();
   staffCanvas = $staff[0].getContext("2d");
   drawStaff();
+
+  $(".getmic").click(function () {
+    getMedia();
+    console.log("click");
+  });
+
+  $(".startgame").click(function () {
+    startGame();
+  });
 });
 
 function startGame() {
@@ -93,11 +144,16 @@ var rafID = null;
 var MIN_SAMPLES = 0; // will be initialized when AudioContext is created.
 
 function updatePitch() {
-  ac = getPitch();
-  if (ac == -1) {
+  const array32 = new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(array32);
+  // console.log(array32);
+
+  const pitch = detectPitch(array32);
+  console.log(pitch);
+
+  if (pitch == null) {
     $noteElem.html("--");
   } else {
-    pitch = ac;
     var note = noteFromPitch(pitch);
     let noteName = noteStrings[note % 12];
     let noteNumber = Math.floor(note / 12) - 1;
@@ -117,4 +173,28 @@ function updatePitch() {
 function noteNumFromPitch(frequency) {
   var noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
   return noteNum + 69;
+}
+
+var noteStrings = [
+  "C",
+  "C#",
+  "D",
+  "D#",
+  "E",
+  "F",
+  "F#",
+  "G",
+  "G#",
+  "A",
+  "A#",
+  "B",
+];
+
+function noteFromPitch(frequency) {
+  var noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
+  return Math.round(noteNum) + 69;
+}
+
+function frequencyFromNoteNumber(note) {
+  return 440 * Math.pow(2, (note - 69) / 12);
 }

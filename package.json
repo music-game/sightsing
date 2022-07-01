@@ -1,0 +1,22 @@
+{
+  "name": "sightsing",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/music-game/sightsing.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/music-game/sightsing/issues"
+  },
+  "homepage": "https://github.com/music-game/sightsing#readme",
+  "dependencies": {
+    "pitchfinder": "^2.3.2"
+  }
+}
