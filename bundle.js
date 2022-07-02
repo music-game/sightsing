@@ -91,7 +91,8 @@ $(document).ready(function () {
 
 function startGame() {
   window.setInterval(updatePitch, pitchSampleRate);
-  window.setInterval(drawGame, renderRate);
+  // window.setInterval(drawGame, renderRate);
+  window.requestAnimationFrame(drawGame);
 }
 
 function drawStaff() {
@@ -146,6 +147,7 @@ function drawGame() {
   gameCanvas.lineTo(80, myPitch - 20);
   gameCanvas.fill();
   gameCanvas.stroke();
+  window.requestAnimationFrame(drawGame);
 }
 
 function updatePitch() {
