@@ -1,19 +1,31 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 /// <reference path="../typings/globals/jquery/index.d.ts" />
 
+// TODO:
+// Play a different cadance depending on tonic.
+// Allow user to adjust tonic
+// Scoring
+// Finish game when done
+
 const Pitchfinder = require("pitchfinder");
 const { start } = require("tone");
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
 //canvas constants
-const canvasHeight = 500;
-const timePerNote = 1500; //ms
-const noteColors = ["green", "orange", "yellow", "blue", "red", "indigo", "violet"];
+const canvasHeight = 500; //px
+const canvasLeftMargin = 150; //pixels between left of canvas and time=0 line
+const timePerNote = 1000; //ms
+const timePerRest = 1000; //ms
+const restInterval = 4; //notes between each rest
+const initialRest = 1000; //ms
+const staffColors = ["LimeGreen", "gray", "salmon", "gray", "yellow", "DeepSkyBlue", "gray", "crimson", "gray", "orange", "gray", "violet"];
+const noteColors = ["LimeGreen", "salmon", "yellow", "DeepSkyBlue", "crimson", "orange", "violet"];
 const notePosition = [0, 1, 3, 5, 6, 8, 10, 12, 13, 15, 17, 18, 20, 22, 24, 25];
 const rowHeight = 20;
-const noteWidth = 75;
+const noteWidth = 50;
 const noteHeight = 16;
+const ppms = noteWidth / timePerNote; //canvas pixels per ms
 
 //canvas/animation variables
 var staffCanvas, gameCanvas, $noteElem, $numElem, canvasWidth, dpr;
@@ -29,14 +41,14 @@ var piano = null;
 
 //pitch variables
 const pitchAvgLength = 5;
-var pitchArray = Array(pitchAvgLength).fill(250);
-var myPitch = 250;
+var pitchArray = Array(pitchAvgLength).fill(57.0);
+var myPitch = 57.0;
 
 //song variables
 // var mySong = null;
-var notes = [0, 8, 9, 10, 11, 12, 0, 11, 10, 9, 8, 0, 7, 6, 5, 4, 0, 5, 6, 7, 8]; //8=tonic
-var tonic = 57; //A3=57
-var starTime = null;
+var notes = [8, 9, 10, 11, 12, 11, 10, 9, 8, 7, 6, 5, 4, 5, 6, 7, 8]; //8=tonic
+var tonic = 60; //A3=57
+var startTime = null;
 var time = null;
 
 //Song functions
@@ -45,7 +57,7 @@ function startSong() {
 }
 function stopSong() {
   startTime = null;
-  gameCanvas.clearRect(0, 0, canvasWidth, 500);
+  gameCanvas.clearRect(0, 0, canvasWidth, canvasHeight);
   window.cancelAnimationFrame(myAniReq);
 }
 function renderSong() {
@@ -55,31 +67,29 @@ function renderSong() {
     let dt = time - startTime;
 
     //clear old canvas
-    gameCanvas.clearRect(0, 0, canvasWidth, 500);
+    gameCanvas.clearRect(0, 0, canvasWidth, canvasHeight);
 
     //draw notes
     for (let i = 0; i < notes.length; i++) {
       let myNote = notes[i];
-      if (myNote == 0) {
-        //rest
-      } else {
-        let myNoteRel = ((myNote - 1) % 7) + 1;
-        let myColor = noteColors[myNoteRel - 1];
-        let myX = 100 + i * noteWidth - (dt / timePerNote) * noteWidth;
-        let myY = canvasHeight - notePosition[myNote] * rowHeight + (rowHeight - noteHeight) / 2;
-        let myWidth = noteWidth;
-        let myHeight = rowHeight * 0.8;
-        if (myX > -noteWidth && myX < canvasWidth) {
-          gameCanvas.strokeStyle = "black";
-          gameCanvas.fillStyle = myColor;
-          gameCanvas.beginPath();
-          gameCanvas.rect(myX, myY, myWidth, myHeight);
-          gameCanvas.fill();
-          gameCanvas.stroke();
-          gameCanvas.fillStyle = "black";
-          gameCanvas.font = "16px Arial";
-          gameCanvas.fillText(myNoteRel, myX + 10, myY + 14);
-        }
+      let myNoteRel = ((myNote - 1) % 7) + 1;
+      let myColor = noteColors[myNoteRel - 1];
+      let numRests = Math.floor(i / restInterval);
+      // let myX = canvasLeftMargin + initialRest * ppms + i * noteWidth + numRests * timePerRest * ppms - dt * ppms;
+      let myX = canvasLeftMargin + (initialRest + numRests * timePerRest - dt) * ppms + i * noteWidth;
+      let myY = canvasHeight - notePosition[myNote] * rowHeight + (rowHeight - noteHeight) / 2;
+      let myWidth = noteWidth;
+      let myHeight = rowHeight * 0.8;
+      if (myX > -noteWidth && myX < canvasWidth) {
+        gameCanvas.strokeStyle = "black";
+        gameCanvas.fillStyle = myColor;
+        gameCanvas.beginPath();
+        gameCanvas.rect(myX, myY, myWidth, myHeight);
+        gameCanvas.fill();
+        gameCanvas.stroke();
+        gameCanvas.fillStyle = "black";
+        gameCanvas.font = "16px Arial";
+        gameCanvas.fillText(myNoteRel, myX + 10, myY + 14);
       }
     }
     //draw arrow
@@ -88,13 +98,17 @@ function renderSong() {
       total += pitchArray[i];
     }
     myPitch = total / pitchArray.length;
+
+    // 45-57-69
+    let noteScaled = Math.min(Math.max(canvasHeight - 10 - (myPitch - tonic + 12) * rowHeight, 0), canvasHeight);
+
     gameCanvas.strokeStyle = "black";
     gameCanvas.fillStyle = "black";
     gameCanvas.lineWidth = 1;
     gameCanvas.beginPath();
-    gameCanvas.moveTo(100, myPitch - 10);
-    gameCanvas.lineTo(80, myPitch);
-    gameCanvas.lineTo(80, myPitch - 20);
+    gameCanvas.moveTo(canvasLeftMargin, noteScaled);
+    gameCanvas.lineTo(canvasLeftMargin - 20, noteScaled + 10);
+    gameCanvas.lineTo(canvasLeftMargin - 20, noteScaled - 10);
     gameCanvas.fill();
     gameCanvas.stroke();
   }
@@ -219,13 +233,12 @@ async function startGame(newgame) {
 }
 
 function drawStaff() {
-  staffCanvas.clearRect(0, 0, canvasWidth, 500);
-  const colors = ["green", "gray", "orange", "gray", "yellow", "blue", "gray", "red", "gray", "indigo", "gray", "violet"];
+  staffCanvas.clearRect(0, 0, canvasWidth, canvasHeight);
   const numbers = ["1", " ", "2", " ", "3", "4", " ", "5", " ", "6", " ", "7"];
   const rows = 25;
   staffCanvas.beginPath();
   for (let i = 0; i < rows; i++) {
-    staffCanvas.fillStyle = colors[i % 12];
+    staffCanvas.fillStyle = staffColors[i % 12];
     staffCanvas.globalAlpha = 0.4;
     staffCanvas.fillRect(0, (rows - i - 1) * rowHeight, canvasWidth, rowHeight);
     staffCanvas.fillStyle = "black";
@@ -235,8 +248,8 @@ function drawStaff() {
   }
   staffCanvas.globalAlpha = 1;
   staffCanvas.fillStyle = "black";
-  staffCanvas.moveTo(100, 0);
-  staffCanvas.lineTo(100, 500);
+  staffCanvas.moveTo(canvasLeftMargin, 0);
+  staffCanvas.lineTo(canvasLeftMargin, canvasHeight);
 
   staffCanvas.stroke();
 }
@@ -255,9 +268,7 @@ function updatePitch() {
 
   if (pitch == null) {
     $noteElem.html("--");
-    // console.log(null);
   } else {
-    // pitch = pitch * 0.99;
     console.log(pitch);
     var note = noteFromPitch(pitch);
     let noteName = noteStrings[note % 12];
@@ -266,12 +277,8 @@ function updatePitch() {
 
     let x = noteNumFromPitch(pitch);
     $numElem.html(note);
-    // 45-57-69
-    let noteScaled = 500 - (x - 45) * 20;
-    let p1 = Math.min(Math.max(noteScaled, 0), 500);
-
     pitchArray.shift();
-    pitchArray.push(p1);
+    pitchArray.push(x);
   }
 }
 
