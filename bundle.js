@@ -6,12 +6,11 @@ const { start } = require("tone");
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
-const pitchSampleRate = 10; //ms
-const renderRate = 33; //ms
+//canvas constants
 const canvasHeight = 500;
 const timePerNote = 1500; //ms
 const noteColors = ["green", "orange", "yellow", "blue", "red", "indigo", "violet"];
-const notePosition = [0, 1, 3, 4, 5, 8, 10, 12, 13, 15, 17, 18, 20, 22, 24, 25];
+const notePosition = [0, 1, 3, 5, 6, 8, 10, 12, 13, 15, 17, 18, 20, 22, 24, 25];
 const rowHeight = 20;
 const noteWidth = 75;
 const noteHeight = 16;
@@ -26,7 +25,6 @@ var detectPitch = null;
 var staffCanvas, gameCanvas, $noteElem, $numElem, canvasWidth, dpr;
 var piano = null;
 
-const pitchAvgTime = 200; //ms
 const pitchAvgLength = 5;
 var pitchArray = Array(pitchAvgLength).fill(250);
 var myPitch = 250;
@@ -34,7 +32,7 @@ var myPitch = 250;
 class Song {
   constructor() {
     this.tonic = 57; //A3=57
-    this.notes = [0, 8, 9, 10, 7, 5, 8, 0, 8, 10, 14, 15]; //8=tonic
+    this.notes = [0, 8, 9, 10, 11, 12, 0, 11, 10, 9, 8, 0, 7, 6, 5, 4, 0, 5, 6, 7, 8]; //8=tonic
     this.startTime = null;
     this.time = null;
   }
