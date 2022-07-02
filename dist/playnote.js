@@ -138,7 +138,7 @@ $(document).ready(function () {
   //initialize the synthesizer upon page load
   var piano = Synth.createInstrument("piano");
   Synth.setSampleRate(40000); // sets sample rate [Hz]
-  Synth.setVolume(volume); // set volume [0-1]
+  Synth.setVolume(0.5); // set volume [0-1]
 
   let melody = []; //stores the correct melody
 

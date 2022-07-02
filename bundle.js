@@ -16,12 +16,15 @@ const rowHeight = 20;
 const noteWidth = 75;
 const noteHeight = 16;
 
+var myAniReq = null;
 var mySong = null;
 var audioContext = null;
+var stream = null;
 var analyser = null;
 var mediaStreamSource = null;
 var detectPitch = null;
 var staffCanvas, gameCanvas, $noteElem, $numElem, canvasWidth, dpr;
+var piano = null;
 
 const pitchAvgTime = 200; //ms
 const pitchAvgLength = 5;
@@ -30,42 +33,51 @@ var myPitch = 250;
 
 class Song {
   constructor() {
-    this.tonic = 57;
+    this.tonic = 57; //A3=57
     this.notes = [0, 8, 9, 10, 7, 5, 8, 0, 8, 10, 14, 15]; //8=tonic
+    this.startTime = null;
+    this.time = null;
+  }
+  start() {
     this.startTime = new Date().getTime();
-    this.time = new Date().getTime();
+  }
+  stop() {
+    this.startTime = null;
+    gameCanvas.clearRect(0, 0, canvasWidth, 500);
+    window.cancelAnimationFrame(myAniReq);
   }
   render() {
-    //figure out time step since start of game
-    this.time = new Date().getTime();
-    let dt = this.time - this.startTime;
-    console.log(dt);
+    if (this.startTime != null) {
+      //figure out time step since start of game
+      this.time = new Date().getTime();
+      let dt = this.time - this.startTime;
 
-    //clear old canvas
-    gameCanvas.clearRect(0, 0, canvasWidth, 500);
+      //clear old canvas
+      gameCanvas.clearRect(0, 0, canvasWidth, 500);
 
-    //draw notes
-    for (let i = 0; i < this.notes.length; i++) {
-      let myNote = this.notes[i];
-      if (myNote == 0) {
-        //rest
-      } else {
-        let myNoteRel = ((myNote - 1) % 7) + 1;
-        let myColor = noteColors[myNoteRel - 1];
-        let myX = 100 + i * noteWidth - (dt / timePerNote) * noteWidth;
-        let myY = canvasHeight - notePosition[myNote] * rowHeight + (rowHeight - noteHeight) / 2;
-        let myWidth = noteWidth;
-        let myHeight = rowHeight * 0.8;
-        if (myX > -noteWidth && myX < canvasWidth) {
-          gameCanvas.strokeStyle = "black";
-          gameCanvas.fillStyle = myColor;
-          gameCanvas.beginPath();
-          gameCanvas.rect(myX, myY, myWidth, myHeight);
-          gameCanvas.fill();
-          gameCanvas.stroke();
-          gameCanvas.fillStyle = "black";
-          gameCanvas.font = "16px Arial";
-          gameCanvas.fillText(myNoteRel, myX + 10, myY + 14);
+      //draw notes
+      for (let i = 0; i < this.notes.length; i++) {
+        let myNote = this.notes[i];
+        if (myNote == 0) {
+          //rest
+        } else {
+          let myNoteRel = ((myNote - 1) % 7) + 1;
+          let myColor = noteColors[myNoteRel - 1];
+          let myX = 100 + i * noteWidth - (dt / timePerNote) * noteWidth;
+          let myY = canvasHeight - notePosition[myNote] * rowHeight + (rowHeight - noteHeight) / 2;
+          let myWidth = noteWidth;
+          let myHeight = rowHeight * 0.8;
+          if (myX > -noteWidth && myX < canvasWidth) {
+            gameCanvas.strokeStyle = "black";
+            gameCanvas.fillStyle = myColor;
+            gameCanvas.beginPath();
+            gameCanvas.rect(myX, myY, myWidth, myHeight);
+            gameCanvas.fill();
+            gameCanvas.stroke();
+            gameCanvas.fillStyle = "black";
+            gameCanvas.font = "16px Arial";
+            gameCanvas.fillText(myNoteRel, myX + 10, myY + 14);
+          }
         }
       }
     }
@@ -115,53 +127,100 @@ $(document).ready(function () {
   staffCanvas.scale(dpr, dpr);
   drawStaff();
 
-  $(".getmic").click(function () {
-    getMedia();
+  //initialize the synthesizer upon page load
+  piano = Synth.createInstrument("piano");
+  Synth.setSampleRate(48000); // sets sample rate [Hz]
+  Synth.setVolume(0.5); // set volume [0-1]
+
+  $(".stopgame").click(function () {
+    if (stream != null) {
+      stream.getAudioTracks().forEach((track) => {
+        track.stop();
+      });
+      console.log("stopping mic");
+      stream = null;
+      audioContext.close();
+    }
+    if (mySong != null) {
+      mySong.stop();
+    }
+  });
+
+  $(".newgame").click(function () {
+    startGame(true);
   });
 
   $(".startgame").click(function () {
-    startGame();
+    startGame(false);
   });
 });
 
 async function getMedia() {
-  let stream = null;
+  if (stream == null) {
+    try {
+      audioContext = new AudioContext();
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
+      // Create an AudioNode from the stream.
+      mediaStreamSource = audioContext.createMediaStreamSource(stream);
+      sampleRate = audioContext.sampleRate;
+      console.log(sampleRate);
 
-  try {
-    audioContext = new AudioContext();
-    stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: false,
-    });
-    // Create an AudioNode from the stream.
-    mediaStreamSource = audioContext.createMediaStreamSource(stream);
-    sampleRate = audioContext.sampleRate;
-    console.log(sampleRate);
+      // Connect it to the destination.
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 2048;
+      mediaStreamSource.connect(analyser);
 
-    // Connect it to the destination.
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 2048;
-    mediaStreamSource.connect(analyser);
-
-    detectPitch = Pitchfinder.AMDF({
-      sampleRate: sampleRate,
-      minFrequency: 78,
-      maxFrequency: 1000,
-      ratio: 5,
-      sensitivity: 0.2,
-    });
-
-    startGame();
-  } catch (err) {
-    console.log("failed to get stream");
+      detectPitch = Pitchfinder.AMDF({
+        sampleRate: sampleRate,
+        minFrequency: 78,
+        maxFrequency: 1000,
+        ratio: 5,
+        sensitivity: 0.2,
+      });
+    } catch (err) {
+      console.log("failed to get stream");
+    }
   }
 }
 
-function startGame() {
-  // window.setInterval(updatePitch, pitchSampleRate);
-  // window.setInterval(drawGame, renderRate);
-  mySong = new Song();
-  window.requestAnimationFrame(drawGame);
+async function startGame(newgame) {
+  if (mySong != null) {
+    mySong.stop();
+  }
+  await getMedia(); //get the microphone working
+  if (newgame || mySong == null) {
+    mySong = new Song();
+  }
+
+  //play the cadance
+  piano.play("A", 3, 2);
+  piano.play("C#", 4, 2);
+  piano.play("E", 4, 2);
+  setTimeout(function () {
+    piano.play("A", 3, 2);
+    piano.play("D", 4, 2);
+    piano.play("F#", 4, 2);
+  }, 1000);
+  setTimeout(function () {
+    piano.play("G#", 3, 2);
+    piano.play("B", 3, 2);
+    piano.play("E", 4, 2);
+  }, 2000);
+  setTimeout(function () {
+    piano.play("A", 3, 2);
+    piano.play("C#", 4, 2);
+    piano.play("E", 4, 2);
+  }, 3000);
+  setTimeout(function () {
+    piano.play("A", 3, 2);
+  }, 4000);
+  setTimeout(function () {
+    mySong.start();
+    myAniReq = window.requestAnimationFrame(drawGame);
+  }, 5000);
 }
 
 function drawStaff() {
@@ -190,7 +249,7 @@ function drawStaff() {
 function drawGame() {
   mySong.render();
   updatePitch();
-  window.requestAnimationFrame(drawGame);
+  myAniReq = window.requestAnimationFrame(drawGame);
 }
 
 function updatePitch() {
