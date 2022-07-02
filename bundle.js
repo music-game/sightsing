@@ -15,71 +15,73 @@ const rowHeight = 20;
 const noteWidth = 75;
 const noteHeight = 16;
 
+//canvas/animation variables
+var staffCanvas, gameCanvas, $noteElem, $numElem, canvasWidth, dpr;
 var myAniReq = null;
-var mySong = null;
+
+//variables for audiocontext and playing tones
 var audioContext = null;
 var stream = null;
 var analyser = null;
 var mediaStreamSource = null;
 var detectPitch = null;
-var staffCanvas, gameCanvas, $noteElem, $numElem, canvasWidth, dpr;
 var piano = null;
 
+//pitch variables
 const pitchAvgLength = 5;
 var pitchArray = Array(pitchAvgLength).fill(250);
 var myPitch = 250;
 
-class Song {
-  constructor() {
-    this.tonic = 57; //A3=57
-    this.notes = [0, 8, 9, 10, 11, 12, 0, 11, 10, 9, 8, 0, 7, 6, 5, 4, 0, 5, 6, 7, 8]; //8=tonic
-    this.startTime = null;
-    this.time = null;
-  }
-  start() {
-    this.startTime = new Date().getTime();
-  }
-  stop() {
-    this.startTime = null;
+//song variables
+// var mySong = null;
+var notes = [0, 8, 9, 10, 11, 12, 0, 11, 10, 9, 8, 0, 7, 6, 5, 4, 0, 5, 6, 7, 8]; //8=tonic
+var tonic = 57; //A3=57
+var starTime = null;
+var time = null;
+
+//Song functions
+function startSong() {
+  startTime = new Date().getTime();
+}
+function stopSong() {
+  startTime = null;
+  gameCanvas.clearRect(0, 0, canvasWidth, 500);
+  window.cancelAnimationFrame(myAniReq);
+}
+function renderSong() {
+  if (startTime != null) {
+    //figure out time step since start of game
+    time = new Date().getTime();
+    let dt = time - startTime;
+
+    //clear old canvas
     gameCanvas.clearRect(0, 0, canvasWidth, 500);
-    window.cancelAnimationFrame(myAniReq);
-  }
-  render() {
-    if (this.startTime != null) {
-      //figure out time step since start of game
-      this.time = new Date().getTime();
-      let dt = this.time - this.startTime;
 
-      //clear old canvas
-      gameCanvas.clearRect(0, 0, canvasWidth, 500);
-
-      //draw notes
-      for (let i = 0; i < this.notes.length; i++) {
-        let myNote = this.notes[i];
-        if (myNote == 0) {
-          //rest
-        } else {
-          let myNoteRel = ((myNote - 1) % 7) + 1;
-          let myColor = noteColors[myNoteRel - 1];
-          let myX = 100 + i * noteWidth - (dt / timePerNote) * noteWidth;
-          let myY = canvasHeight - notePosition[myNote] * rowHeight + (rowHeight - noteHeight) / 2;
-          let myWidth = noteWidth;
-          let myHeight = rowHeight * 0.8;
-          if (myX > -noteWidth && myX < canvasWidth) {
-            gameCanvas.strokeStyle = "black";
-            gameCanvas.fillStyle = myColor;
-            gameCanvas.beginPath();
-            gameCanvas.rect(myX, myY, myWidth, myHeight);
-            gameCanvas.fill();
-            gameCanvas.stroke();
-            gameCanvas.fillStyle = "black";
-            gameCanvas.font = "16px Arial";
-            gameCanvas.fillText(myNoteRel, myX + 10, myY + 14);
-          }
+    //draw notes
+    for (let i = 0; i < notes.length; i++) {
+      let myNote = notes[i];
+      if (myNote == 0) {
+        //rest
+      } else {
+        let myNoteRel = ((myNote - 1) % 7) + 1;
+        let myColor = noteColors[myNoteRel - 1];
+        let myX = 100 + i * noteWidth - (dt / timePerNote) * noteWidth;
+        let myY = canvasHeight - notePosition[myNote] * rowHeight + (rowHeight - noteHeight) / 2;
+        let myWidth = noteWidth;
+        let myHeight = rowHeight * 0.8;
+        if (myX > -noteWidth && myX < canvasWidth) {
+          gameCanvas.strokeStyle = "black";
+          gameCanvas.fillStyle = myColor;
+          gameCanvas.beginPath();
+          gameCanvas.rect(myX, myY, myWidth, myHeight);
+          gameCanvas.fill();
+          gameCanvas.stroke();
+          gameCanvas.fillStyle = "black";
+          gameCanvas.font = "16px Arial";
+          gameCanvas.fillText(myNoteRel, myX + 10, myY + 14);
         }
       }
     }
-
     //draw arrow
     var total = 0;
     for (var i = 0; i < pitchArray.length; i++) {
@@ -120,7 +122,6 @@ $(document).ready(function () {
 
   gameCanvas = $game[0].getContext("2d");
   gameCanvas.scale(dpr, dpr);
-  // drawGame();
   staffCanvas = $staff[0].getContext("2d");
   staffCanvas.scale(dpr, dpr);
   drawStaff();
@@ -139,9 +140,7 @@ $(document).ready(function () {
       stream = null;
       audioContext.close();
     }
-    if (mySong != null) {
-      mySong.stop();
-    }
+    stopSong();
   });
 
   $(".newgame").click(function () {
@@ -185,12 +184,10 @@ async function getMedia() {
 }
 
 async function startGame(newgame) {
-  if (mySong != null) {
-    mySong.stop();
-  }
+  stopSong();
   await getMedia(); //get the microphone working
-  if (newgame || mySong == null) {
-    mySong = new Song();
+  if (newgame) {
+    //generate new melody
   }
 
   //play the cadance
@@ -216,7 +213,7 @@ async function startGame(newgame) {
     piano.play("A", 3, 2);
   }, 4000);
   setTimeout(function () {
-    mySong.start();
+    startSong();
     myAniReq = window.requestAnimationFrame(drawGame);
   }, 5000);
 }
@@ -245,7 +242,7 @@ function drawStaff() {
 }
 
 function drawGame() {
-  mySong.render();
+  renderSong();
   updatePitch();
   myAniReq = window.requestAnimationFrame(drawGame);
 }
