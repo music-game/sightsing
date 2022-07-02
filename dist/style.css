@@ -1,3 +1,7 @@
+* {
+  box-sizing: border-box;
+}
+
 body {
   font: 14pt "Alike", sans-serif;
 }
@@ -15,27 +19,29 @@ body {
   margin-top: 2px;
 }
 
-#note {
-  font-size: 40px;
-  width: 100px;
-  height: 50px;
-  text-align: left;
-}
-
-#number {
-  height: 50px;
-  width: 100px;
-  text-align: left;
-  font-size: 40px;
-}
-
-.detector {
-  width: 300px;
-  height: 100px;
-  border: 4px solid gray;
+.infobox {
+  display: flex;
+  width: 400px;
+  height: auto;
+  border: 3px solid black;
   border-radius: 8px;
   text-align: center;
-  padding-top: 10px;
+  padding: 2px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.infotxt {
+  font-size: 20px;
+  width: 100px;
+  text-align: right;
+}
+.infoval {
+  width: 100px;
+  text-align: left;
+  font-size: 20px;
+  padding-left: 20px;
 }
 
 canvas#game {
