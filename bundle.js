@@ -9,11 +9,11 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext;
 const pitchSampleRate = 10; //ms
 const renderRate = 33; //ms
 const canvasHeight = 500;
-const timePerNote = 1000; //ms
+const timePerNote = 1500; //ms
 const noteColors = ["green", "orange", "yellow", "blue", "red", "indigo", "violet"];
 const notePosition = [0, 1, 3, 4, 5, 8, 10, 12, 13, 15, 17, 18, 20, 22, 24, 25];
 const rowHeight = 20;
-const noteWidth = 80;
+const noteWidth = 75;
 const noteHeight = 16;
 
 var mySong = null;
@@ -24,7 +24,7 @@ var detectPitch = null;
 var staffCanvas, gameCanvas, $noteElem, $numElem, canvasWidth, dpr;
 
 const pitchAvgTime = 200; //ms
-const pitchAvgLength = 10;
+const pitchAvgLength = 5;
 var pitchArray = Array(pitchAvgLength).fill(250);
 var myPitch = 250;
 
