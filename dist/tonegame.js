@@ -16,7 +16,8 @@ var detectPitch = null;
 var staffCanvas, gameCanvas, $noteElem, $numElem, canvasWidth, dpr;
 
 const pitchAvgTime = 200; //ms
-var pitchArray = Array(Math.floor(pitchAvgTime / pitchSampleRate)).fill(250);
+const pitchAvgLength = 10;
+var pitchArray = Array(pitchAvgLength).fill(250);
 var myPitch = 250;
 
 async function getMedia() {
@@ -74,7 +75,7 @@ $(document).ready(function () {
   gameCanvas.strokeStyle = "black";
   gameCanvas.lineWidth = 1;
   gameCanvas.scale(dpr, dpr);
-  drawGame();
+  // drawGame();
   staffCanvas = $staff[0].getContext("2d");
   staffCanvas.scale(dpr, dpr);
   drawStaff();
@@ -89,7 +90,7 @@ $(document).ready(function () {
 });
 
 function startGame() {
-  window.setInterval(updatePitch, pitchSampleRate);
+  // window.setInterval(updatePitch, pitchSampleRate);
   // window.setInterval(drawGame, renderRate);
   window.requestAnimationFrame(drawGame);
 }
@@ -146,6 +147,7 @@ function drawGame() {
   gameCanvas.lineTo(80, myPitch - 20);
   gameCanvas.fill();
   gameCanvas.stroke();
+  updatePitch();
   window.requestAnimationFrame(drawGame);
 }
 
