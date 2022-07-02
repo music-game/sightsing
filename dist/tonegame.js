@@ -8,7 +8,14 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext;
 const pitchSampleRate = 10; //ms
 const renderRate = 33; //ms
 const canvasHeight = 500;
+const timePerNote = 1000; //ms
+const noteColors = ["green", "orange", "yellow", "blue", "red", "indigo", "violet"];
+const notePosition = [0, 1, 3, 4, 5, 8, 10, 12, 13, 15, 17, 18, 20, 22, 24, 25];
+const rowHeight = 20;
+const noteWidth = 80;
+const noteHeight = 16;
 
+var mySong = null;
 var audioContext = null;
 var analyser = null;
 var mediaStreamSource = null;
@@ -19,6 +26,102 @@ const pitchAvgTime = 200; //ms
 const pitchAvgLength = 10;
 var pitchArray = Array(pitchAvgLength).fill(250);
 var myPitch = 250;
+
+class Song {
+  constructor() {
+    this.tonic = 57;
+    this.notes = [0, 8, 9, 10, 7, 5, 8, 0, 8, 10, 14, 15]; //8=tonic
+    this.startTime = new Date().getTime();
+    this.time = new Date().getTime();
+  }
+  render() {
+    //figure out time step since start of game
+    this.time = new Date().getTime();
+    let dt = this.time - this.startTime;
+    console.log(dt);
+
+    //clear old canvas
+    gameCanvas.clearRect(0, 0, canvasWidth, 500);
+
+    //draw notes
+    for (let i = 0; i < this.notes.length; i++) {
+      let myNote = this.notes[i];
+      if (myNote == 0) {
+        //rest
+      } else {
+        let myNoteRel = ((myNote - 1) % 7) + 1;
+        let myColor = noteColors[myNoteRel - 1];
+        let myX = 100 + i * noteWidth - (dt / timePerNote) * noteWidth;
+        let myY = canvasHeight - notePosition[myNote] * rowHeight + (rowHeight - noteHeight) / 2;
+        let myWidth = noteWidth;
+        let myHeight = rowHeight * 0.8;
+        if (myX > -noteWidth && myX < canvasWidth) {
+          gameCanvas.strokeStyle = "black";
+          gameCanvas.fillStyle = myColor;
+          gameCanvas.beginPath();
+          gameCanvas.rect(myX, myY, myWidth, myHeight);
+          gameCanvas.fill();
+          gameCanvas.stroke();
+          gameCanvas.fillStyle = "black";
+          gameCanvas.font = "16px Arial";
+          gameCanvas.fillText(myNoteRel, myX + 10, myY + 14);
+        }
+      }
+    }
+
+    //draw arrow
+    var total = 0;
+    for (var i = 0; i < pitchArray.length; i++) {
+      total += pitchArray[i];
+    }
+    myPitch = total / pitchArray.length;
+    gameCanvas.strokeStyle = "black";
+    gameCanvas.fillStyle = "black";
+    gameCanvas.lineWidth = 1;
+    gameCanvas.beginPath();
+    gameCanvas.moveTo(100, myPitch - 10);
+    gameCanvas.lineTo(80, myPitch);
+    gameCanvas.lineTo(80, myPitch - 20);
+    gameCanvas.fill();
+    gameCanvas.stroke();
+  }
+}
+
+$(document).ready(function () {
+  let $staff = $("#staff");
+  let $game = $("#game");
+  let $container = $(".container");
+  $noteElem = $("#note");
+  $numElem = $("#number");
+
+  dpr = window.devicePixelRatio || 1;
+  let w = window.innerWidth;
+  canvasWidth = Math.min(w - 20, 800);
+  $container.width(canvasWidth);
+  $staff[0].width = canvasWidth * dpr;
+  $game[0].width = canvasWidth * dpr;
+  $staff[0].height = canvasHeight * dpr;
+  $game[0].height = canvasHeight * dpr;
+  $staff[0].style.width = canvasWidth + "px";
+  $game[0].style.width = canvasWidth + "px";
+  $staff[0].style.height = canvasHeight + "px";
+  $game[0].style.height = canvasHeight + "px";
+
+  gameCanvas = $game[0].getContext("2d");
+  gameCanvas.scale(dpr, dpr);
+  // drawGame();
+  staffCanvas = $staff[0].getContext("2d");
+  staffCanvas.scale(dpr, dpr);
+  drawStaff();
+
+  $(".getmic").click(function () {
+    getMedia();
+  });
+
+  $(".startgame").click(function () {
+    startGame();
+  });
+});
 
 async function getMedia() {
   let stream = null;
@@ -46,74 +149,25 @@ async function getMedia() {
       ratio: 5,
       sensitivity: 0.2,
     });
+
+    startGame();
   } catch (err) {
     console.log("failed to get stream");
   }
 }
 
-$(document).ready(function () {
-  let $staff = $("#staff");
-  let $game = $("#game");
-  let $container = $(".container");
-  $noteElem = $("#note");
-  $numElem = $("#number");
-
-  dpr = window.devicePixelRatio || 1;
-  let w = window.innerWidth;
-  canvasWidth = Math.min(w - 20, 800);
-  $container.width(canvasWidth);
-  $staff[0].width = canvasWidth * dpr;
-  $game[0].width = canvasWidth * dpr;
-  $staff[0].height = canvasHeight * dpr;
-  $game[0].height = canvasHeight * dpr;
-  $staff[0].style.width = canvasWidth + "px";
-  $game[0].style.width = canvasWidth + "px";
-  $staff[0].style.height = canvasHeight + "px";
-  $game[0].style.height = canvasHeight + "px";
-
-  gameCanvas = $game[0].getContext("2d");
-  gameCanvas.strokeStyle = "black";
-  gameCanvas.lineWidth = 1;
-  gameCanvas.scale(dpr, dpr);
-  // drawGame();
-  staffCanvas = $staff[0].getContext("2d");
-  staffCanvas.scale(dpr, dpr);
-  drawStaff();
-
-  $(".getmic").click(function () {
-    getMedia();
-  });
-
-  $(".startgame").click(function () {
-    startGame();
-  });
-});
-
 function startGame() {
   // window.setInterval(updatePitch, pitchSampleRate);
   // window.setInterval(drawGame, renderRate);
+  mySong = new Song();
   window.requestAnimationFrame(drawGame);
 }
 
 function drawStaff() {
   staffCanvas.clearRect(0, 0, canvasWidth, 500);
-  const colors = [
-    "green",
-    "gray",
-    "orange",
-    "gray",
-    "yellow",
-    "blue",
-    "gray",
-    "red",
-    "gray",
-    "indigo",
-    "gray",
-    "violet",
-  ];
+  const colors = ["green", "gray", "orange", "gray", "yellow", "blue", "gray", "red", "gray", "indigo", "gray", "violet"];
   const numbers = ["1", " ", "2", " ", "3", "4", " ", "5", " ", "6", " ", "7"];
   const rows = 25;
-  const rowHeight = 20;
   staffCanvas.beginPath();
   for (let i = 0; i < rows; i++) {
     staffCanvas.fillStyle = colors[i % 12];
@@ -133,20 +187,7 @@ function drawStaff() {
 }
 
 function drawGame() {
-  // console.log(pitchArray);
-  var total = 0;
-  for (var i = 0; i < pitchArray.length; i++) {
-    total += pitchArray[i];
-  }
-  myPitch = total / pitchArray.length;
-  gameCanvas.clearRect(0, 0, canvasWidth, 500);
-  gameCanvas.strokeStyle = "black";
-  gameCanvas.beginPath();
-  gameCanvas.moveTo(100, myPitch - 10);
-  gameCanvas.lineTo(80, myPitch);
-  gameCanvas.lineTo(80, myPitch - 20);
-  gameCanvas.fill();
-  gameCanvas.stroke();
+  mySong.render();
   updatePitch();
   window.requestAnimationFrame(drawGame);
 }
@@ -186,20 +227,7 @@ function noteNumFromPitch(frequency) {
   return noteNum + 69;
 }
 
-var noteStrings = [
-  "C",
-  "C#",
-  "D",
-  "D#",
-  "E",
-  "F",
-  "F#",
-  "G",
-  "G#",
-  "A",
-  "A#",
-  "B",
-];
+var noteStrings = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
 function noteFromPitch(frequency) {
   var noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
