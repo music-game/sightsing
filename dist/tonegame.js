@@ -298,9 +298,8 @@ async function startGame(newgame) {
   await getMedia(); //get the microphone working
   if (newgame || notes.length < 1) {
     let level = parseInt($lvlsel.val());
-    console.log(level);
+    console.log("Level: " + level);
     genMelody(level); //generate the melody notes
-    console.log(notes);
   }
 
   //set the tonic to get midpoint = userMiddleNote
@@ -312,6 +311,8 @@ async function startGame(newgame) {
   tonic = userMiddleNote - (midPoint - notePosition[8]);
   console.log("Middle Note: " + noteNameFromNum(userMiddleNote));
   console.log("Tonic Note: " + noteNameFromNum(tonic));
+  console.log("Notes: " + notes.map((x) => noteNameFromNum(notePosition[x] - notePosition[8] + tonic)));
+  console.log(notes);
 
   //play the cadence
   if (!DEBUG) {
@@ -453,7 +454,7 @@ function updatePitch() {
   if (pitch == null) {
     //do nothing
   } else {
-    console.log(pitch);
+    if (DEBUG) console.log(pitch);
     let x = noteNumFromPitch(pitch);
     pitchArray.shift();
     pitchArray.push(x);
