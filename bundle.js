@@ -1,17 +1,13 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 /// <reference path="../typings/globals/jquery/index.d.ts" />
 
-// TODO:
-// Avoid picking up harmonics as fundamental
-// Add more levels
-
 const DEBUG = false;
 const Pitchfinder = require("pitchfinder");
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
 //canvas constants
 const canvasHeight = 500; //px
-const canvasLeftMargin = 200; //pixels between left of canvas and time=0 line
+var canvasLeftMargin = 200; //pixels between left of canvas and time=0 line
 const ppms = 0.05; //canvas pixels per ms
 var timePerNote = 1000; //ms
 if (DEBUG) {
@@ -103,6 +99,7 @@ $(document).ready(function () {
   gameCanvas.scale(dpr, dpr);
   staffCanvas = $staff[0].getContext("2d");
   staffCanvas.scale(dpr, dpr);
+  canvasLeftMargin = Math.min(200, Math.round(canvasWidth / 2));
   drawStaff();
 
   //initialize the synthesizer upon page load
@@ -133,6 +130,25 @@ function stopSong() {
   startTime = null;
   gameCanvas.clearRect(0, 0, canvasWidth, canvasHeight);
   window.cancelAnimationFrame(myAniReq);
+}
+
+function calcAvgPitch() {
+  let myPitch = 0;
+  var total = 0;
+  var minval = Infinity;
+  var maxval = -Infinity;
+  for (var i = 0; i < pitchArray.length; i++) {
+    tempval = pitchArray[i];
+    total += tempval;
+    if (tempval < minval) minval = tempval;
+    if (tempval > maxval) maxval = tempval;
+  }
+  if (pitchArray.length < pitchAvgLength) {
+    myPitch = total / pitchArray.length;
+  } else {
+    myPitch = (total - minval - maxval) / (pitchArray.length - 2);
+  }
+  return myPitch;
 }
 
 function renderFrame() {
@@ -177,11 +193,7 @@ function renderFrame() {
     //calculate current pitch
     let noteScaled = null;
     if (pitchArray.length > 0) {
-      var total = 0;
-      for (var i = 0; i < pitchArray.length; i++) {
-        total += pitchArray[i];
-      }
-      let myPitch = total / pitchArray.length;
+      let myPitch = calcAvgPitch();
       $debuginfo.html(noteNameFromNum(Math.round(myPitch)));
       noteScaled = canvasHeight - 10 - (myPitch - tonic + 12) * rowHeight;
       arrowPosition = Math.min(Math.max(noteScaled, 0), canvasHeight); //clip to available canvas
@@ -242,6 +254,12 @@ function renderFrame() {
     }
     gameCanvas.stroke();
 
+    //delete old samples if they are now off screen
+    if (xdata_shift[0] < 0) {
+      xdata.shift();
+      ydata.shift();
+    }
+
     //draw arrow
     if (scoring > 0) {
       gameCanvas.strokeStyle = "black";
@@ -260,7 +278,7 @@ function renderFrame() {
     gameCanvas.stroke();
 
     //see if the game is over
-    if (dt > finishTime) {
+    if (dt > finishTime && !DEBUG) {
       stopGame();
     }
   }
@@ -290,8 +308,13 @@ async function getMedia() {
         minFrequency: 78,
         maxFrequency: 1000,
         ratio: 5,
-        sensitivity: 0.2,
+        sensitivity: 0.1,
       });
+      // detectPitch = Pitchfinder.YIN({
+      //   sampleRate: sampleRate,
+      //   threshold: 0.1,
+      //   probabilityThreshold: 0.1,
+      // });
     } catch (err) {
       console.log("failed to get stream");
     }
@@ -453,7 +476,6 @@ function drawStaff() {
   staffCanvas.clearRect(0, 0, canvasWidth, canvasHeight);
   const numbers = ["1", " ", "2", " ", "3", "4", " ", "5", " ", "6", " ", "7"];
   const rows = 25;
-  staffCanvas.beginPath();
   for (let i = 0; i < rows; i++) {
     staffCanvas.fillStyle = staffColors[i % 12];
     staffCanvas.globalAlpha = 0.4;
@@ -465,6 +487,8 @@ function drawStaff() {
   }
   staffCanvas.globalAlpha = 1;
   staffCanvas.fillStyle = "black";
+  staffCanvas.lineWidth = 2;
+  staffCanvas.beginPath();
   staffCanvas.moveTo(canvasLeftMargin, 0);
   staffCanvas.lineTo(canvasLeftMargin, canvasHeight);
 
@@ -490,7 +514,7 @@ function updatePitch() {
     }
   } else {
     pitchFound = pitchFoundThresh; //reset counter when pitch is found
-    if (DEBUG) console.log(pitch);
+    // if (DEBUG) console.log(pitch);
     let x = noteNumFromPitch(pitch);
     pitchArray.push(x);
     if (pitchArray.length > pitchAvgLength) {
