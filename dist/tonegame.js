@@ -1,13 +1,13 @@
 /// <reference path="../typings/globals/jquery/index.d.ts" />
 
 // TODO:
-// Allow user to adjust midpoint of range
 // Dont score when not singing
+// Add trail to plot
+// Avoid picking up harmonics as fundamental
+// Add more levels
 
-const Pitchfinder = require("pitchfinder");
-const { start } = require("tone");
 const DEBUG = false;
-
+const Pitchfinder = require("pitchfinder");
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
 //canvas constants
@@ -16,7 +16,7 @@ const canvasLeftMargin = 150; //pixels between left of canvas and time=0 line
 const ppms = 0.05; //canvas pixels per ms
 var timePerNote = 1000; //ms
 if (DEBUG) {
-  timePerNote = 500; //ms
+  timePerNote = 1000; //ms
 }
 const timePerRest = 1000; //ms
 const restInterval = 4; //notes between each rest
@@ -30,8 +30,11 @@ const noteWidth = timePerNote * ppms;
 const noteHeight = 16;
 
 //canvas/animation variables
-var staffCanvas, gameCanvas, $score, $progress, canvasWidth, dpr;
+var staffCanvas, gameCanvas, canvasWidth, dpr;
 var myAniReq = null;
+
+//jquery variables
+var $score, $progress, $staff, $game, $container, $startgame, $newgame, $stopgame, $lvlsel, $notesel, $debuginfo;
 
 //variables for audiocontext and playing tones
 var audioContext = null;
@@ -50,8 +53,8 @@ var myPitch = 57.0;
 //song variables
 const numNotes = 20;
 var notes = []; //8=tonic
-var tonic = 60; //C4=60
-var userMiddleNote = 57;
+var tonic = null; //C4=60
+var userMiddleNote = null;
 var startTime = null;
 var finishTime = null;
 var time = null;
@@ -65,11 +68,18 @@ var currentProgress = 0;
 const perfScoreVal = 1;
 
 $(document).ready(function () {
-  let $staff = $("#staff");
-  let $game = $("#game");
-  let $container = $(".container");
+  //find jquery elements
+  $staff = $("#staff");
+  $game = $("#game");
+  $container = $(".container");
   $score = $(".score");
   $progress = $(".progress");
+  $startgame = $(".startgame");
+  $newgame = $(".newgame");
+  $stopgame = $(".stopgame");
+  $lvlsel = $(".lvlsel");
+  $notesel = $(".notesel");
+  $debuginfo = $(".debuginfo");
 
   dpr = window.devicePixelRatio || 1;
   let w = window.innerWidth;
@@ -95,30 +105,31 @@ $(document).ready(function () {
   Synth.setSampleRate(48000); // sets sample rate [Hz]
   Synth.setVolume(0.5); // set volume [0-1]
 
-  $(".stopgame").click(function () {
+  $stopgame.click(function () {
     stopGame();
   });
 
-  $(".newgame").click(function () {
+  $newgame.click(function () {
     startGame(true);
   });
 
-  $(".startgame").click(function () {
+  $startgame.click(function () {
     startGame(false);
   });
 });
 
-//Song functions
 function startSong() {
   startTime = new Date().getTime();
   let numRests = Math.floor(numNotes / restInterval);
   finishTime = initialRest + numRests * timePerRest + numNotes * timePerNote + finishRest;
 }
+
 function stopSong() {
   startTime = null;
   gameCanvas.clearRect(0, 0, canvasWidth, canvasHeight);
   window.cancelAnimationFrame(myAniReq);
 }
+
 function renderFrame() {
   if (startTime != null) {
     //figure out time step since start of game
@@ -164,6 +175,7 @@ function renderFrame() {
       total += pitchArray[i];
     }
     myPitch = total / pitchArray.length;
+    $debuginfo.html(noteNameFromNum(Math.round(myPitch)));
 
     // 45-57-69
     let noteScaled = Math.min(Math.max(canvasHeight - 10 - (myPitch - tonic + 12) * rowHeight, 0), canvasHeight);
@@ -224,6 +236,7 @@ function renderFrame() {
     }
   }
 }
+
 async function getMedia() {
   if (stream == null) {
     try {
@@ -242,6 +255,7 @@ async function getMedia() {
       analyser.fftSize = 2048;
       mediaStreamSource.connect(analyser);
 
+      // Initialize the pitch detector
       detectPitch = Pitchfinder.AMDF({
         sampleRate: sampleRate,
         minFrequency: 78,
@@ -254,10 +268,11 @@ async function getMedia() {
     }
   }
 }
+
 function stopGame() {
-  $(".stopgame").prop("disabled", true);
-  $(".startgame").prop("disabled", false);
-  $(".newgame").prop("disabled", false);
+  $stopgame.prop("disabled", true);
+  $startgame.prop("disabled", false);
+  $newgame.prop("disabled", false);
   if (stream != null) {
     stream.getAudioTracks().forEach((track) => {
       track.stop();
@@ -268,29 +283,35 @@ function stopGame() {
   }
   stopSong();
 }
+
 async function startGame(newgame) {
-  $(".startgame").prop("disabled", true);
-  $(".newgame").prop("disabled", true);
+  $startgame.prop("disabled", true);
+  $newgame.prop("disabled", true);
   //reset scoring
   currentScore = 0;
   currentProgress = 0;
+  prevNote = 0;
   $score.html("--");
   $progress.html("--");
 
   stopSong();
   await getMedia(); //get the microphone working
   if (newgame || notes.length < 1) {
-    let level = parseInt($(".lvlsel").val());
+    let level = parseInt($lvlsel.val());
     console.log(level);
     genMelody(level); //generate the melody notes
     console.log(notes);
-    //set the tonic to get midpoint = userMiddleNote
-    let maxNote = Math.max(...notes);
-    let minNote = Math.min(...notes);
-    let midPoint = Math.round((maxNote + minNote) / 2);
-    tonic = userMiddleNote - (notePosition[midPoint] - notePosition[8]);
-    console.log(tonic);
   }
+
+  //set the tonic to get midpoint = userMiddleNote
+  let maxNote = Math.max(...notes);
+  let minNote = Math.min(...notes);
+  // let midPoint = Math.round((maxNote + minNote) / 2);
+  let midPoint = Math.round((notePosition[maxNote] + notePosition[minNote]) / 2);
+  userMiddleNote = parseInt($notesel.val());
+  tonic = userMiddleNote - (midPoint - notePosition[8]);
+  console.log("Middle Note: " + noteNameFromNum(userMiddleNote));
+  console.log("Tonic Note: " + noteNameFromNum(tonic));
 
   //play the cadence
   if (!DEBUG) {
@@ -298,12 +319,12 @@ async function startGame(newgame) {
     setTimeout(function () {
       startSong();
       myAniReq = window.requestAnimationFrame(drawGame);
-      $(".stopgame").prop("disabled", false);
+      $stopgame.prop("disabled", false);
     }, 5000);
   } else {
     startSong();
     myAniReq = window.requestAnimationFrame(drawGame);
-    $(".stopgame").prop("disabled", false);
+    $stopgame.prop("disabled", false);
   }
 }
 
@@ -445,6 +466,12 @@ function noteNumFromPitch(frequency) {
   return noteNum + 69;
 }
 
-function frequencyFromNoteNumber(note) {
+function noteNameFromNum(noteNum) {
+  let noteName = noteStrings[noteNum % 12];
+  let noteNumber = Math.floor(noteNum / 12) - 1;
+  return noteName + noteNumber;
+}
+
+function frequencyFromNoteNumber(noteNum) {
   return 440 * Math.pow(2, (note - 69) / 12);
 }

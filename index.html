@@ -13,16 +13,33 @@
     <script src="dist/audiosynth.js"></script>
   </head>
   <body>
-    <select class="lvlsel">
-      <option value="1" selected="selected">level 1</option>
-      <option value="2">level 2</option>
-      <option value="3">level 3</option>
-    </select>
-    <button class="newgame">New Game</button>
-    <button class="stopgame" disabled="true">Stop Game</button>
-    <button class="startgame" disabled="true">Replay</button>
+    
 
     <div class="container">
+      <div class="debuginfo"></div>
+      <div class="setup">
+        <select class="lvlsel">
+          <option value="1" selected="selected">Level 1</option>
+          <option value="2">Level 2</option>
+          <option value="3">Level 3</option>
+        </select>
+        <button class="newgame">New Game</button>
+        <button class="stopgame" disabled="true">Stop Game</button>
+        <button class="startgame" disabled="true">Replay</button>
+        <select class="notesel">
+          <option value="52">E3</option>
+          <option value="53">F3</option>
+          <option value="55">G3</option>
+          <option value="57">A3</option>
+          <option value="59">B3</option>
+          <option value="60"selected="selected">C4</option>
+          <option value="62">D4</option>
+          <option value="64">E4</option>
+          <option value="65">F4</option>
+          <option value="67">G4</option>
+          <option value="69">A4</option>
+        </select>
+      </div>
       <div class="infobox">
         <div class="infotxt">Score: </div>
         <div class="infoval score">-- </div>
