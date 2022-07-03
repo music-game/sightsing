@@ -13,9 +13,14 @@
     <script src="dist/audiosynth.js"></script>
   </head>
   <body>
-    <button class="startgame">Start Game</button>
-    <button class="stopgame">Stop Game</button>
+    <select class="lvlsel">
+      <option value="1" selected="selected">level 1</option>
+      <option value="2">level 2</option>
+      <option value="3">level 3</option>
+    </select>
     <button class="newgame">New Game</button>
+    <button class="stopgame" disabled="true">Stop Game</button>
+    <button class="startgame" disabled="true">Replay</button>
 
     <div class="container">
       <div class="infobox">
