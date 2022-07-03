@@ -3,7 +3,6 @@
 
 // TODO:
 // Allow user to adjust midpoint of range
-// Drop down box for levels
 // Dont score when not singing
 
 const Pitchfinder = require("pitchfinder");
@@ -53,7 +52,7 @@ var myPitch = 57.0;
 const numNotes = 20;
 var notes = []; //8=tonic
 var tonic = 60; //C4=60
-var userMiddleNote = 55;
+var userMiddleNote = 57;
 var startTime = null;
 var finishTime = null;
 var time = null;
