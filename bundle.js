@@ -2,8 +2,6 @@
 /// <reference path="../typings/globals/jquery/index.d.ts" />
 
 // TODO:
-// Dont score when not singing
-// Add trail to plot
 // Avoid picking up harmonics as fundamental
 // Add more levels
 
@@ -13,7 +11,7 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
 //canvas constants
 const canvasHeight = 500; //px
-const canvasLeftMargin = 150; //pixels between left of canvas and time=0 line
+const canvasLeftMargin = 200; //pixels between left of canvas and time=0 line
 const ppms = 0.05; //canvas pixels per ms
 var timePerNote = 1000; //ms
 if (DEBUG) {
@@ -48,8 +46,10 @@ const noteStrings = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#",
 
 //pitch variables
 const pitchAvgLength = 5;
-var pitchArray = Array(pitchAvgLength).fill(57.0);
-var myPitch = 57.0;
+var pitchArray = [];
+var arrowPosition = 250; //position of the arrow at start of game. Updates as game is played
+const pitchFoundThresh = 5; //how many samples have to be null before we consider no pitch found
+var pitchFound = 0; //countdown until we consider no pitch found (resets to pitchFoundThresh when detected)
 
 //song variables
 const numNotes = 20;
@@ -67,6 +67,10 @@ var noteScoreArray = [];
 var currentScore = 0;
 var currentProgress = 0;
 const perfScoreVal = 1;
+
+//scope variables
+var xdata = [];
+var ydata = [];
 
 $(document).ready(function () {
   //find jquery elements
@@ -170,22 +174,27 @@ function renderFrame() {
         noteCenter = myY + noteHeight / 2;
       }
     }
-    //draw arrow
-    var total = 0;
-    for (var i = 0; i < pitchArray.length; i++) {
-      total += pitchArray[i];
+    //calculate current pitch
+    let noteScaled = null;
+    if (pitchArray.length > 0) {
+      var total = 0;
+      for (var i = 0; i < pitchArray.length; i++) {
+        total += pitchArray[i];
+      }
+      let myPitch = total / pitchArray.length;
+      $debuginfo.html(noteNameFromNum(Math.round(myPitch)));
+      noteScaled = canvasHeight - 10 - (myPitch - tonic + 12) * rowHeight;
+      arrowPosition = Math.min(Math.max(noteScaled, 0), canvasHeight); //clip to available canvas
+      //arrow Position only updates if pitchArray is not empty
     }
-    myPitch = total / pitchArray.length;
-    $debuginfo.html(noteNameFromNum(Math.round(myPitch)));
+    xdata.push(canvasLeftMargin + dt * ppms);
+    ydata.push(noteScaled);
 
-    // 45-57-69
-    let noteScaled = Math.min(Math.max(canvasHeight - 10 - (myPitch - tonic + 12) * rowHeight, 0), canvasHeight);
-
-    //calculate scoring on this note so far
+    //calculate whether it is currently scoring
     let scoring = 0;
-    if (noteScaled < noteCenter + 5 && noteScaled > noteCenter - 5) {
+    if (arrowPosition < noteCenter + 5 && arrowPosition > noteCenter - 5 && pitchFound > 0) {
       scoring = 2;
-    } else if (noteScaled < noteCenter + 10 && noteScaled > noteCenter - 10) {
+    } else if (arrowPosition < noteCenter + 10 && arrowPosition > noteCenter - 10 && pitchFound > 0) {
       scoring = 1;
     }
     //if current note is new, then calculate the previous note's score
@@ -202,19 +211,38 @@ function renderFrame() {
         currentScore = currentScore + scaledScore;
         currentProgress = currentProgress + 100 / notes.length;
       }
-
       noteScoreArray = [];
     }
     //then append the new score if we are not on a rest currently
     if (currentNote > 0) {
       noteScoreArray.push(scoring);
     }
-
     prevNote = currentNote;
 
+    //update game info
     $score.html(Math.round(currentScore * 10) / 10 + "%");
     $progress.html(Math.round(currentProgress * 10) / 10 + "%");
 
+    //draw scope
+    let xdata_shift = xdata.map((x) => x - dt * ppms);
+    let drawing = false;
+    gameCanvas.lineWidth = 3;
+    gameCanvas.beginPath();
+    for (let i = 0; i < xdata_shift.length; i++) {
+      if (ydata[i] == null) {
+        drawing = false;
+      } else {
+        if (!drawing) {
+          gameCanvas.moveTo(xdata_shift[i], ydata[i]);
+          drawing = true;
+        } else {
+          gameCanvas.lineTo(xdata_shift[i], ydata[i]);
+        }
+      }
+    }
+    gameCanvas.stroke();
+
+    //draw arrow
     if (scoring > 0) {
       gameCanvas.strokeStyle = "black";
       gameCanvas.fillStyle = "green";
@@ -224,10 +252,10 @@ function renderFrame() {
     }
     gameCanvas.lineWidth = 1;
     gameCanvas.beginPath();
-    gameCanvas.moveTo(canvasLeftMargin, noteScaled);
-    gameCanvas.lineTo(canvasLeftMargin - 20, noteScaled + 10);
-    gameCanvas.lineTo(canvasLeftMargin - 20, noteScaled - 10);
-    gameCanvas.lineTo(canvasLeftMargin, noteScaled);
+    gameCanvas.moveTo(canvasLeftMargin, arrowPosition);
+    gameCanvas.lineTo(canvasLeftMargin - 20, arrowPosition + 10);
+    gameCanvas.lineTo(canvasLeftMargin - 20, arrowPosition - 10);
+    gameCanvas.lineTo(canvasLeftMargin, arrowPosition);
     gameCanvas.fill();
     gameCanvas.stroke();
 
@@ -288,10 +316,13 @@ function stopGame() {
 async function startGame(newgame) {
   $startgame.prop("disabled", true);
   $newgame.prop("disabled", true);
-  //reset scoring
+  //reset everything
   currentScore = 0;
   currentProgress = 0;
   prevNote = 0;
+  xdata = [];
+  ydata = [];
+  pitchFound = 0;
   $score.html("--");
   $progress.html("--");
 
@@ -453,12 +484,18 @@ function updatePitch() {
   var pitch = detectPitch(array32);
 
   if (pitch == null) {
-    //do nothing
+    pitchFound--; //subtract one from pitchFound counter
+    if (pitchFound < 1) {
+      pitchArray = []; //reset the pitchArray when pitchFound = 0
+    }
   } else {
+    pitchFound = pitchFoundThresh; //reset counter when pitch is found
     if (DEBUG) console.log(pitch);
     let x = noteNumFromPitch(pitch);
-    pitchArray.shift();
     pitchArray.push(x);
+    if (pitchArray.length > pitchAvgLength) {
+      pitchArray.shift();
+    }
   }
 }
 
