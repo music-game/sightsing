@@ -4,8 +4,9 @@
     <link rel="shortcut icon" href="#" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
     <link rel="stylesheet" href="./dist/style.css?version=1" />
-    <title>Sight Singing Game</title>
+    <title>Sight-Singer</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
     <script src="bundle.js?version=1"></script>
     <script src="dist/audiosynth.js"></script>
   </head>
@@ -14,7 +15,7 @@
       <div class="debuginfo"></div>
       <div class="titlebar">
         <button class="showsettings"><img src="dist/gear.png" height="25px" /></button>
-        <div class="title">Sight-Singing Game</div>
+        <div class="title">Sight-Singer</div>
         <button class="showhelp">?</button>
       </div>
       <div class="setup">
@@ -36,12 +37,12 @@
       <!-- New Game Page -->
       <div class="newtab" hidden="true">
         <div class="title">New Game</div>
-        <div class="topbuttons">
+        <div class="buttonbar">
           <button class="customlevel">Custom Level</button>
           <button class="closetab">Cancel</button>
         </div>
-        <div class="levelgrid">
-          <div class="levelnames">
+        <div class="columngrid">
+          <div class="columndata">
             <div class="subtitle">Select Level</div>
             <button class="levelsel" value="1">Level 1</button>
             <button class="levelsel" value="2">Level 2</button>
@@ -58,7 +59,7 @@
             <button class="levelsel" value="13">Level 13</button>
             <button class="levelsel" value="14">Level 14</button>
           </div>
-          <div class="levelscores">
+          <div class="columndata scorelist">
             <div class="subtitle">Best Score</div>
             <div class="bestscore">--</div>
             <div class="bestscore">--</div>
@@ -81,16 +82,16 @@
       <!-- Settings Page -->
       <div class="settingstab" hidden="true">
         <div class="title">Settings</div>
-        <div class="topbuttons">
+        <div class="buttonbar">
           <button class="applysettings">Apply</button>
           <button class="closetab">Cancel</button>
         </div>
-        <div class="levelgrid">
-          <div class="levelnames">
-            <div class="bestscore">Middle of Comfortable Vocal Range:</div>
+        <div class="columngrid">
+          <div class="widecolumn">
+            <div class="settingtext">Middle of Comfortable Vocal Range:</div>
           </div>
-          <div class="bestscore">
-            <div class="subtitle">
+          <div class="narrowcolumn">
+            <div class="settingtext">
               <select class="notesel">
                 <option value="69">A4</option>
                 <option value="67">G4</option>
@@ -98,7 +99,7 @@
                 <option value="64">E4</option>
                 <option value="62">D4</option>
                 <option value="60">C4</option>
-                <option value="59" selected="selected">B3</option>
+                <option value="59">B3</option>
                 <option value="57">A3</option>
                 <option value="55">G3</option>
                 <option value="53">F3</option>
@@ -107,13 +108,32 @@
             </div>
           </div>
         </div>
+        <div class="buttonbar">
+          <button class="resetprog">Reset All Progress</button>
+        </div>
+        <div class="resettab" hidden="true">
+          <div class="paragraph">
+            <p>This will clear your best scores for every level.</p>
+            <p>Are you sure you wish to proceed?</p>
+          </div>
+          <div class="buttonbar">
+            <button class="confirmreset">YES</button>
+            <button class="closetab">CANCEL</button>
+          </div>
+        </div>
       </div>
 
       <!-- Help Page -->
       <div class="helptab" hidden="true">
         <div class="title">Help</div>
-        <button class="closetab">Cancel</button>
-        <div class="helptext">Help info here</div>
+        <div class="paragraph">
+          <p>Welcome to Sight-Singer.</p>
+          <p>
+            Before you play, be sure to open the settings and set the note closest to the middle of your comfortable vocal range. The melodies will
+            all be centered around this note.
+          </p>
+        </div>
+        <button class="closetab">Done</button>
       </div>
     </div>
   </body>

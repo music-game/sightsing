@@ -3,10 +3,8 @@
 
 //TODO:
 //more levels
+//add warning for reset progress
 //try different tone generator library to see if it is better
-//cookies to save progress
-//help screen
-//settings screen
 
 const DEBUG = false;
 const Pitchfinder = require("pitchfinder");
@@ -36,7 +34,8 @@ var staffCanvas, gameCanvas, canvasWidth, dpr;
 var myAniReq = null;
 
 //jquery variables
-var $score, $progress, $staff, $game, $board, $startgame, $newgame, $stopgame, $lvlsel, $notesel, $debuginfo, $newtab, $settingstab, $helptab;
+var $score, $progress, $staff, $game, $board, $startgame, $newgame, $stopgame, $resettab;
+var $notesel, $debuginfo, $newtab, $settingstab, $helptab, $showsettings, $scorelist;
 
 //variables for audiocontext and playing tones
 var audioContext = null;
@@ -58,7 +57,7 @@ var pitchFound = 0; //countdown until we consider no pitch found (resets to pitc
 const numNotes = 20;
 var notes = []; //8=tonic
 var tonic = null; //C4=60
-var userMiddleNote = 60;
+var userMiddleNote = 57;
 var startTime = null;
 var finishTime = null;
 var time = null;
@@ -84,14 +83,16 @@ $(document).ready(function () {
   $score = $(".score");
   $progress = $(".progress");
   $startgame = $(".startgame");
+  $showsettings = $(".showsettings");
   $newgame = $(".newgame");
   $stopgame = $(".stopgame");
-  $lvlsel = $(".lvlsel");
   $notesel = $(".notesel");
   $debuginfo = $(".debuginfo");
   $newtab = $(".newtab");
   $settingstab = $(".settingstab");
+  $resettab = $(".resettab");
   $helptab = $(".helptab");
+  $scorelist = $(".scorelist");
 
   dpr = window.devicePixelRatio || 1;
   let w = window.innerWidth;
@@ -118,11 +119,15 @@ $(document).ready(function () {
   Synth.setSampleRate(48000); // sets sample rate [Hz]
   Synth.setVolume(0.5); // set volume [0-1]
 
+  //load cookies
+  loadCookies();
+
   $stopgame.click(function () {
     stopGame();
   });
 
   $newgame.click(function () {
+    loadCookies();
     $newtab.show();
   });
 
@@ -140,11 +145,23 @@ $(document).ready(function () {
   $("button.applysettings").click(function () {
     userMiddleNote = parseInt($notesel.val());
     console.log("Middle Note: " + userMiddleNote);
+    Cookies.set("middlenote", userMiddleNote, { expires: 3650 });
     $settingstab.hide();
   });
 
-  $("button.showsettings").click(function () {
+  $showsettings.click(function () {
+    loadCookies();
     $settingstab.show();
+  });
+
+  $("button.resetprog").click(function () {
+    $resettab.show();
+  });
+
+  $("button.confirmreset").click(function () {
+    clearProgress();
+    $resettab.hide();
+    $settingstab.hide();
   });
 
   $("button.showhelp").click(function () {
@@ -155,8 +172,38 @@ $(document).ready(function () {
     $newtab.hide();
     $settingstab.hide();
     $helptab.hide();
+    $resettab.hide();
   });
 });
+
+function clearProgress() {
+  console.log("clearing progress");
+  for (let i = 1; i < 10; i++) {
+    Cookies.remove(i);
+  }
+}
+
+function loadCookies() {
+  //First load any saved settings
+  userMiddleNote = Cookies.get("middlenote");
+  if (userMiddleNote == undefined) {
+    userMiddleNote = 57; //default to A3
+  }
+  $notesel.val(userMiddleNote);
+
+  //Then load Scores
+  for (let i = 1; i < 10; i++) {
+    let myScore = Cookies.get(i);
+    if (myScore != undefined) {
+      $(".scorelist")
+        .children()
+        .eq(i)
+        .html(myScore + "%");
+    } else {
+      $(".scorelist").children().eq(i).html("--");
+    }
+  }
+}
 
 function startSong() {
   startTime = new Date().getTime();
@@ -348,13 +395,20 @@ async function getMedia() {
         ratio: 5,
         sensitivity: 0.1,
       });
+
       // detectPitch = Pitchfinder.YIN({
       //   sampleRate: sampleRate,
       //   threshold: 0.1,
       //   probabilityThreshold: 0.1,
       // });
+
+      return true;
     } catch (err) {
       console.log("failed to get stream");
+      alert(
+        "Can't access microphone. Make sure you allow microphone access, and nothing else is using the microphone. \nIf this still doesn't work, you may need to restart your device."
+      );
+      return false;
     }
   }
 }
@@ -363,6 +417,7 @@ function stopGame() {
   $stopgame.prop("disabled", true);
   $startgame.prop("disabled", false);
   $newgame.prop("disabled", false);
+  $showsettings.prop("disabled", false);
   if (stream != null) {
     stream.getAudioTracks().forEach((track) => {
       track.stop();
@@ -371,52 +426,60 @@ function stopGame() {
     stream = null;
     audioContext.close();
   }
+  //save score
+  let bestScore = Cookies.get(selectedLevel);
+  if (bestScore == undefined || currentScore > bestScore) {
+    Cookies.set(selectedLevel, Math.round(currentScore * 10) / 10, { expires: 3650 });
+  }
   stopSong();
 }
 
 async function startGame(newgame) {
-  $startgame.prop("disabled", true);
-  $newgame.prop("disabled", true);
-  //reset everything
-  currentScore = 0;
-  currentProgress = 0;
-  prevNote = 0;
-  xdata = [];
-  ydata = [];
-  pitchFound = 0;
-  $score.html("--");
-  $progress.html("--");
+  let connection = false;
+  connection = await getMedia(); //get the microphone working
+  if (connection) {
+    stopSong();
+    $startgame.prop("disabled", true);
+    $newgame.prop("disabled", true);
+    $showsettings.prop("disabled", true);
+    //reset everything
+    currentScore = 0;
+    currentProgress = 0;
+    prevNote = 0;
+    xdata = [];
+    ydata = [];
+    pitchFound = 0;
+    $score.html("--");
+    $progress.html("--");
+    if (newgame || notes.length < 1) {
+      let level = selectedLevel;
+      console.log("Level: " + level);
+      genMelody(level); //generate the melody notes
+    }
 
-  stopSong();
-  await getMedia(); //get the microphone working
-  if (newgame || notes.length < 1) {
-    let level = selectedLevel;
-    console.log("Level: " + level);
-    genMelody(level); //generate the melody notes
-  }
+    //set the tonic to get midpoint = userMiddleNote
+    let maxNote = Math.max(...notes);
+    let minNote = Math.min(...notes);
+    let midPoint = Math.round((notePosition[maxNote] + notePosition[minNote]) / 2);
+    tonic = userMiddleNote - (midPoint - notePosition[8]);
+    console.log("Middle Note: " + noteNameFromNum(userMiddleNote));
+    console.log("Tonic Note: " + noteNameFromNum(tonic));
+    console.log("Notes: " + notes.map((x) => noteNameFromNum(notePosition[x] - notePosition[8] + tonic)));
+    console.log(notes);
 
-  //set the tonic to get midpoint = userMiddleNote
-  let maxNote = Math.max(...notes);
-  let minNote = Math.min(...notes);
-  let midPoint = Math.round((notePosition[maxNote] + notePosition[minNote]) / 2);
-  tonic = userMiddleNote - (midPoint - notePosition[8]);
-  console.log("Middle Note: " + noteNameFromNum(userMiddleNote));
-  console.log("Tonic Note: " + noteNameFromNum(tonic));
-  console.log("Notes: " + notes.map((x) => noteNameFromNum(notePosition[x] - notePosition[8] + tonic)));
-  console.log(notes);
-
-  //play the cadence
-  if (!DEBUG) {
-    playCadence();
-    setTimeout(function () {
+    //play the cadence
+    if (!DEBUG) {
+      playCadence();
+      setTimeout(function () {
+        startSong();
+        myAniReq = window.requestAnimationFrame(drawGame);
+        $stopgame.prop("disabled", false);
+      }, 5000);
+    } else {
       startSong();
       myAniReq = window.requestAnimationFrame(drawGame);
       $stopgame.prop("disabled", false);
-    }, 5000);
-  } else {
-    startSong();
-    myAniReq = window.requestAnimationFrame(drawGame);
-    $stopgame.prop("disabled", false);
+    }
   }
 }
 

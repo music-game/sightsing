@@ -41,7 +41,7 @@ button.showsettings {
   width: 800px;
   height: 650px;
   /* overflow: hidden; */
-  border: 1px solid #000;
+  /* border: 1px solid #000; */
   border-radius: 10px;
   margin-top: 2px;
   margin-left: auto;
@@ -77,8 +77,8 @@ button.showsettings {
 }
 .debuginfo {
   position: absolute;
-  left: 10px;
-  top: 10px;
+  left: 5%;
+  top: 60px;
 }
 
 .setup {
@@ -147,26 +147,38 @@ canvas#staff {
   border: 3px solid black;
   border-radius: 8px;
   text-align: center;
-  padding: 5px;
+  padding: 20px;
   font: inherit;
 }
-.levelgrid {
+.columngrid {
   display: flex;
   justify-content: center;
   width: 90%;
   margin: auto;
   margin-top: 10px;
 }
-.levelnames,
-.levelscores {
+
+.columndata {
   width: 50%;
+  display: flexbox;
+  flex-direction: column;
+}
+.narrowcolumn {
+  width: 25%;
+  display: flexbox;
+  flex-direction: column;
+}
+.widecolumn {
+  width: 75%;
   display: flexbox;
   flex-direction: column;
 }
 .levelsel,
 .customlevel,
 .closetab,
-.applysettings {
+.resetprog,
+.applysettings,
+.confirmreset {
   height: 40px;
   text-align: center;
   display: block;
@@ -186,7 +198,7 @@ canvas#staff {
   margin-top: 8px;
   margin-bottom: 8px;
 }
-.topbuttons {
+.buttonbar {
   display: flex;
   width: min(250px, 85%);
   height: auto;
@@ -195,4 +207,33 @@ canvas#staff {
   margin-right: auto;
   margin-top: 5px;
   margin-bottom: 5px;
+}
+.settingtext {
+  height: 40px;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: auto;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+.paragraph {
+  text-align: center;
+  display: block;
+  justify-content: center;
+  align-items: center;
+  margin: auto;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+select {
+  width: 80px;
+  padding: 5px;
+  font-size: 16px;
+  font-weight: 700;
+  border: 1px solid #ccc;
+  height: 40px;
 }
