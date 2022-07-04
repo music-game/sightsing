@@ -3,22 +3,64 @@
 }
 
 body {
-  font: 14pt "Alike", sans-serif;
+  background: #fff;
+  color: #000;
+  margin: 0;
+  overflow: hidden;
+  padding: 0;
+  font-family: sans-serif;
+  font-size: 20px;
+  font-weight: 700;
 }
-.droptarget {
-  background-color: #348781;
+
+button {
+  align-items: center;
+  background: #fff;
+  border: 3px solid #000;
+  border-radius: 10px;
+  color: #000;
+  display: inline-flex;
+  margin: 0;
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 16px;
 }
-.container {
-  margin: 0 auto;
+button:hover {
+  background: rgba(0, 0, 0, 0.15);
+}
+button[disabled] {
+  border-color: rgba(0, 0, 0, 0.15);
+  color: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.board {
   width: 800px;
   height: 650px;
-  overflow: hidden;
-  position: relative;
+  /* overflow: hidden; */
   border: 1px solid #000;
   border-radius: 10px;
   margin-top: 2px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
+.container {
+  width: 100%;
+}
+
+.title {
+  text-align: center;
+  font: inherit;
+  font-size: 24px;
+  padding: 5px;
+}
+.subtitle {
+  text-align: center;
+  font: inherit;
+  font-size: 20px;
+  padding: 5px;
+}
 .debuginfo {
   position: absolute;
   left: 10px;
@@ -26,11 +68,11 @@ body {
 }
 
 .setup {
-  display: flexbox;
-  width: min(400px, 90%);
+  display: flex;
+  justify-content: space-between;
+  width: min(360px, 85%);
   height: auto;
   text-align: center;
-  padding: 2px;
   margin-left: auto;
   margin-right: auto;
   margin-top: 5px;
@@ -49,16 +91,15 @@ body {
   margin-right: auto;
   margin-top: 10px;
   margin-bottom: 10px;
+  font: inherit;
 }
 .infotxt {
-  font-size: 20px;
   width: 100px;
   text-align: right;
 }
 .infoval {
   width: 100px;
   text-align: left;
-  font-size: 20px;
   padding-left: 20px;
 }
 
@@ -75,4 +116,68 @@ canvas#staff {
   top: 0;
   z-index: 2;
   opacity: 1;
+}
+
+.newtab {
+  position: absolute;
+  overflow: auto;
+  top: 325px;
+  left: 50%;
+  width: min(500px, 90%);
+  height: 600px;
+  transform: translate(-50%, -50%);
+  background-color: rgb(170, 131, 170);
+  z-index: 100;
+  border: 3px solid black;
+  border-radius: 8px;
+  text-align: center;
+  padding: 5px;
+  font: inherit;
+}
+.levelgrid {
+  display: flex;
+  justify-content: center;
+  width: 90%;
+  margin: auto;
+  margin-top: 10px;
+}
+.levelnames {
+  width: 50%;
+  display: flexbox;
+  flex-direction: column;
+}
+.levelscores {
+  width: 50%;
+}
+.levelsel,
+.customlevel,
+.closetab {
+  height: 40px;
+  text-align: center;
+  display: block;
+  margin: auto;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+.levelsel {
+  width: min(80%, 150px);
+}
+.bestscore {
+  width: min(80%, 150px);
+  height: 40px;
+  text-align: center;
+  display: block;
+  margin: auto;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+.topbuttons {
+  display: flex;
+  width: min(250px, 85%);
+  height: auto;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 5px;
+  margin-bottom: 5px;
 }

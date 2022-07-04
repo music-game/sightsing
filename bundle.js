@@ -1,6 +1,12 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 /// <reference path="../typings/globals/jquery/index.d.ts" />
 
+//TODO:
+//more levels
+//try different tone generator library to see if it is better
+//cookies to save progress + progress screen
+//help screen
+
 const DEBUG = false;
 const Pitchfinder = require("pitchfinder");
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -29,7 +35,7 @@ var staffCanvas, gameCanvas, canvasWidth, dpr;
 var myAniReq = null;
 
 //jquery variables
-var $score, $progress, $staff, $game, $container, $startgame, $newgame, $stopgame, $lvlsel, $notesel, $debuginfo;
+var $score, $progress, $staff, $game, $board, $startgame, $newgame, $stopgame, $lvlsel, $notesel, $debuginfo, $newtab;
 
 //variables for audiocontext and playing tones
 var audioContext = null;
@@ -57,6 +63,7 @@ var finishTime = null;
 var time = null;
 var currentNote = 0;
 var prevNote = 0;
+var selectedLevel = 1;
 
 //scoring variables
 var noteScoreArray = [];
@@ -72,7 +79,7 @@ $(document).ready(function () {
   //find jquery elements
   $staff = $("#staff");
   $game = $("#game");
-  $container = $(".container");
+  $board = $(".board");
   $score = $(".score");
   $progress = $(".progress");
   $startgame = $(".startgame");
@@ -81,11 +88,12 @@ $(document).ready(function () {
   $lvlsel = $(".lvlsel");
   $notesel = $(".notesel");
   $debuginfo = $(".debuginfo");
+  $newtab = $(".newtab");
 
   dpr = window.devicePixelRatio || 1;
   let w = window.innerWidth;
   canvasWidth = Math.min(w - 20, 800);
-  $container.width(canvasWidth);
+  $board.width(canvasWidth);
   $staff[0].width = canvasWidth * dpr;
   $game[0].width = canvasWidth * dpr;
   $staff[0].height = canvasHeight * dpr;
@@ -112,11 +120,22 @@ $(document).ready(function () {
   });
 
   $newgame.click(function () {
-    startGame(true);
+    $newtab.show();
   });
 
   $startgame.click(function () {
     startGame(false);
+  });
+
+  $("button.levelsel").click(function () {
+    selectedLevel = parseInt($(this).val());
+    console.log("Level: " + selectedLevel);
+    $newtab.hide();
+    startGame(true);
+  });
+
+  $("button.closetab").click(function () {
+    $newtab.hide();
   });
 });
 
@@ -352,7 +371,7 @@ async function startGame(newgame) {
   stopSong();
   await getMedia(); //get the microphone working
   if (newgame || notes.length < 1) {
-    let level = parseInt($lvlsel.val());
+    let level = selectedLevel;
     console.log("Level: " + level);
     genMelody(level); //generate the melody notes
   }

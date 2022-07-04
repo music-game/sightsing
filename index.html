@@ -2,10 +2,7 @@
 <html lang="en">
   <head>
     <link rel="shortcut icon" href="#" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
     <link rel="stylesheet" href="./dist/style.css?version=1" />
     <title>Sight Singing Game</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -13,16 +10,73 @@
     <script src="dist/audiosynth.js"></script>
   </head>
   <body>
-    
-
-    <div class="container">
+    <div class="board">
+      <div class="title">Sight-Singing Game</div>
       <div class="debuginfo"></div>
       <div class="setup">
-        <select class="lvlsel">
-          <option value="1">Level 1</option>
-          <option value="2">Level 2</option>
-          <option value="3" selected="selected">Level 3</option>
-        </select>
+        <button class="newgame">New Game</button>
+        <button class="stopgame" disabled="true">Stop Game</button>
+        <button class="startgame" disabled="true">Replay</button>
+      </div>
+      <div class="infobox">
+        <div class="infotxt">Score:</div>
+        <div class="infoval score">--</div>
+        <div class="infotxt">Progress:</div>
+        <div class="infoval progress">--</div>
+      </div>
+      <div class="container">
+        <canvas id="staff" width="800" height="500"></canvas>
+        <canvas id="game" width="800" height="500"></canvas>
+      </div>
+
+      <!-- New Game Page -->
+      <div class="newtab" hidden="true">
+        <div class="title">New Game</div>
+        <div class="topbuttons">
+          <button class="customlevel">Custom Level</button>
+          <button class="closetab">Cancel</button>
+        </div>
+        <div class="levelgrid">
+          <div class="levelnames">
+            <div class="subtitle">Select Level</div>
+            <button class="levelsel" value="1">Level 1</button>
+            <button class="levelsel" value="2">Level 2</button>
+            <button class="levelsel" value="3">Level 3</button>
+            <button class="levelsel" value="4">Level 4</button>
+            <button class="levelsel" value="5">Level 5</button>
+            <button class="levelsel" value="6">Level 6</button>
+            <button class="levelsel" value="7">Level 7</button>
+            <button class="levelsel" value="8">Level 8</button>
+            <button class="levelsel" value="9">Level 9</button>
+            <button class="levelsel" value="10">Level 10</button>
+            <button class="levelsel" value="11">Level 11</button>
+            <button class="levelsel" value="12">Level 12</button>
+            <button class="levelsel" value="13">Level 13</button>
+            <button class="levelsel" value="14">Level 14</button>
+          </div>
+          <div class="levelscores">
+            <div class="subtitle">Best Score</div>
+            <div class="bestscore">--</div>
+            <div class="bestscore">--</div>
+            <div class="bestscore">--</div>
+            <div class="bestscore">--</div>
+            <div class="bestscore">--</div>
+            <div class="bestscore">--</div>
+            <div class="bestscore">--</div>
+            <div class="bestscore">--</div>
+            <div class="bestscore">--</div>
+            <div class="bestscore">--</div>
+            <div class="bestscore">--</div>
+            <div class="bestscore">--</div>
+            <div class="bestscore">--</div>
+            <div class="bestscore">--</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- New Game Page -->
+      <div class="settingstab" hidden="true">
+        <div class="title">Settings</div>
         <select class="notesel">
           <option value="69">A4</option>
           <option value="67">G4</option>
@@ -36,20 +90,6 @@
           <option value="53">F3</option>
           <option value="52">E3</option>
         </select>
-      </div>
-      <div class="setup">
-        <button class="newgame">New Game</button>
-        <button class="stopgame" disabled="true">Stop Game</button>
-        <button class="startgame" disabled="true">Replay</button>
-      </div>
-      <div class="infobox">
-        <div class="infotxt">Score: </div>
-        <div class="infoval score">-- </div>
-        <div class="infotxt">Progress: </div>
-        <div class="infoval progress">--</div>
-      </div>
-        <canvas id="staff" width="800" height="500"></canvas>
-        <canvas id="game" width="800" height="500"></canvas>
       </div>
     </div>
   </body>
