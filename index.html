@@ -11,8 +11,12 @@
   </head>
   <body>
     <div class="board">
-      <div class="title">Sight-Singing Game</div>
       <div class="debuginfo"></div>
+      <div class="titlebar">
+        <button class="showsettings"><img src="dist/gear.png" height="25px" /></button>
+        <div class="title">Sight-Singing Game</div>
+        <button class="showhelp">?</button>
+      </div>
       <div class="setup">
         <button class="newgame">New Game</button>
         <button class="stopgame" disabled="true">Stop Game</button>
@@ -74,22 +78,42 @@
         </div>
       </div>
 
-      <!-- New Game Page -->
+      <!-- Settings Page -->
       <div class="settingstab" hidden="true">
         <div class="title">Settings</div>
-        <select class="notesel">
-          <option value="69">A4</option>
-          <option value="67">G4</option>
-          <option value="65">F4</option>
-          <option value="64">E4</option>
-          <option value="62">D4</option>
-          <option value="60">C4</option>
-          <option value="59" selected="selected">B3</option>
-          <option value="57">A3</option>
-          <option value="55">G3</option>
-          <option value="53">F3</option>
-          <option value="52">E3</option>
-        </select>
+        <div class="topbuttons">
+          <button class="applysettings">Apply</button>
+          <button class="closetab">Cancel</button>
+        </div>
+        <div class="levelgrid">
+          <div class="levelnames">
+            <div class="bestscore">Middle of Comfortable Vocal Range:</div>
+          </div>
+          <div class="bestscore">
+            <div class="subtitle">
+              <select class="notesel">
+                <option value="69">A4</option>
+                <option value="67">G4</option>
+                <option value="65">F4</option>
+                <option value="64">E4</option>
+                <option value="62">D4</option>
+                <option value="60">C4</option>
+                <option value="59" selected="selected">B3</option>
+                <option value="57">A3</option>
+                <option value="55">G3</option>
+                <option value="53">F3</option>
+                <option value="52">E3</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Help Page -->
+      <div class="helptab" hidden="true">
+        <div class="title">Help</div>
+        <button class="closetab">Cancel</button>
+        <div class="helptext">Help info here</div>
       </div>
     </div>
   </body>

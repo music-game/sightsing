@@ -33,6 +33,9 @@ button[disabled] {
   color: rgba(0, 0, 0, 0.15);
   background: rgba(0, 0, 0, 0.15);
 }
+button.showsettings {
+  padding: 3px;
+}
 
 .board {
   width: 800px;
@@ -49,6 +52,17 @@ button[disabled] {
   width: 100%;
 }
 
+.titlebar {
+  display: flex;
+  justify-content: space-between;
+  width: min(95%);
+  height: auto;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
 .title {
   text-align: center;
   font: inherit;
@@ -118,7 +132,9 @@ canvas#staff {
   opacity: 1;
 }
 
-.newtab {
+.newtab,
+.settingstab,
+.helptab {
   position: absolute;
   overflow: auto;
   top: 325px;
@@ -141,17 +157,16 @@ canvas#staff {
   margin: auto;
   margin-top: 10px;
 }
-.levelnames {
+.levelnames,
+.levelscores {
   width: 50%;
   display: flexbox;
   flex-direction: column;
 }
-.levelscores {
-  width: 50%;
-}
 .levelsel,
 .customlevel,
-.closetab {
+.closetab,
+.applysettings {
   height: 40px;
   text-align: center;
   display: block;

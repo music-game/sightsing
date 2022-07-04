@@ -3,8 +3,9 @@
 //TODO:
 //more levels
 //try different tone generator library to see if it is better
-//cookies to save progress + progress screen
+//cookies to save progress
 //help screen
+//settings screen
 
 const DEBUG = false;
 const Pitchfinder = require("pitchfinder");
@@ -34,7 +35,7 @@ var staffCanvas, gameCanvas, canvasWidth, dpr;
 var myAniReq = null;
 
 //jquery variables
-var $score, $progress, $staff, $game, $board, $startgame, $newgame, $stopgame, $lvlsel, $notesel, $debuginfo, $newtab;
+var $score, $progress, $staff, $game, $board, $startgame, $newgame, $stopgame, $lvlsel, $notesel, $debuginfo, $newtab, $settingstab, $helptab;
 
 //variables for audiocontext and playing tones
 var audioContext = null;
@@ -56,7 +57,7 @@ var pitchFound = 0; //countdown until we consider no pitch found (resets to pitc
 const numNotes = 20;
 var notes = []; //8=tonic
 var tonic = null; //C4=60
-var userMiddleNote = null;
+var userMiddleNote = 60;
 var startTime = null;
 var finishTime = null;
 var time = null;
@@ -88,6 +89,8 @@ $(document).ready(function () {
   $notesel = $(".notesel");
   $debuginfo = $(".debuginfo");
   $newtab = $(".newtab");
+  $settingstab = $(".settingstab");
+  $helptab = $(".helptab");
 
   dpr = window.devicePixelRatio || 1;
   let w = window.innerWidth;
@@ -133,8 +136,24 @@ $(document).ready(function () {
     startGame(true);
   });
 
+  $("button.applysettings").click(function () {
+    userMiddleNote = parseInt($notesel.val());
+    console.log("Middle Note: " + userMiddleNote);
+    $settingstab.hide();
+  });
+
+  $("button.showsettings").click(function () {
+    $settingstab.show();
+  });
+
+  $("button.showhelp").click(function () {
+    $helptab.show();
+  });
+
   $("button.closetab").click(function () {
     $newtab.hide();
+    $settingstab.hide();
+    $helptab.hide();
   });
 });
 
@@ -378,9 +397,7 @@ async function startGame(newgame) {
   //set the tonic to get midpoint = userMiddleNote
   let maxNote = Math.max(...notes);
   let minNote = Math.min(...notes);
-  // let midPoint = Math.round((maxNote + minNote) / 2);
   let midPoint = Math.round((notePosition[maxNote] + notePosition[minNote]) / 2);
-  userMiddleNote = parseInt($notesel.val());
   tonic = userMiddleNote - (midPoint - notePosition[8]);
   console.log("Middle Note: " + noteNameFromNum(userMiddleNote));
   console.log("Tonic Note: " + noteNameFromNum(tonic));
