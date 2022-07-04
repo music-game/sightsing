@@ -1,9 +1,9 @@
 /// <reference path="../typings/globals/jquery/index.d.ts" />
 
 //TODO:
-//more levels
-//add warning for reset progress
+//custom level generator
 //try different tone generator library to see if it is better
+//see if we can improve pitch detection. maybe allow settings to adjust some of the detector settings.
 
 const DEBUG = false;
 const Pitchfinder = require("pitchfinder");
@@ -14,10 +14,11 @@ const canvasHeight = 500; //px
 var canvasLeftMargin = 200; //pixels between left of canvas and time=0 line
 const ppms = 0.05; //canvas pixels per ms
 var timePerNote = 1000; //ms
+var timePerRest = 1000; //ms
 if (DEBUG) {
-  timePerNote = 1000; //ms
+  timePerNote = 500; //ms
+  timePerRest = 500; //ms
 }
-const timePerRest = 1000; //ms
 const restInterval = 4; //notes between each rest
 const initialRest = 1000; //ms
 const finishRest = 2000; //ms
@@ -53,7 +54,6 @@ const pitchFoundThresh = 5; //how many samples have to be null before we conside
 var pitchFound = 0; //countdown until we consider no pitch found (resets to pitchFoundThresh when detected)
 
 //song variables
-const numNotes = 20;
 var notes = []; //8=tonic
 var tonic = null; //C4=60
 var userMiddleNote = 57;
@@ -126,18 +126,20 @@ $(document).ready(function () {
   });
 
   $newgame.click(function () {
+    hideTabs();
     loadCookies();
     $newtab.show();
   });
 
   $startgame.click(function () {
+    hideTabs();
     startGame(false);
   });
 
   $("button.levelsel").click(function () {
     selectedLevel = parseInt($(this).val());
     console.log("Level: " + selectedLevel);
-    $newtab.hide();
+    hideTabs();
     startGame(true);
   });
 
@@ -145,10 +147,11 @@ $(document).ready(function () {
     userMiddleNote = parseInt($notesel.val());
     console.log("Middle Note: " + userMiddleNote);
     Cookies.set("middlenote", userMiddleNote, { expires: 3650 });
-    $settingstab.hide();
+    hideTabs();
   });
 
   $showsettings.click(function () {
+    hideTabs();
     loadCookies();
     $settingstab.show();
   });
@@ -159,25 +162,30 @@ $(document).ready(function () {
 
   $("button.confirmreset").click(function () {
     clearProgress();
-    $resettab.hide();
-    $settingstab.hide();
+    hideTabs();
   });
 
   $("button.showhelp").click(function () {
+    hideTabs();
     $helptab.show();
   });
 
   $("button.closetab").click(function () {
-    $newtab.hide();
-    $settingstab.hide();
-    $helptab.hide();
-    $resettab.hide();
+    hideTabs();
   });
 });
 
+function hideTabs() {
+  $newtab.hide();
+  $settingstab.hide();
+  $helptab.hide();
+  $resettab.hide();
+}
+
 function clearProgress() {
   console.log("clearing progress");
-  for (let i = 1; i < 10; i++) {
+  var count = $(".scorelist").children().length;
+  for (let i = 1; i <= count; i++) {
     Cookies.remove(i);
   }
 }
@@ -191,7 +199,8 @@ function loadCookies() {
   $notesel.val(userMiddleNote);
 
   //Then load Scores
-  for (let i = 1; i < 10; i++) {
+  var count = $(".scorelist").children().length;
+  for (let i = 1; i <= count; i++) {
     let myScore = Cookies.get(i);
     if (myScore != undefined) {
       $(".scorelist")
@@ -206,6 +215,7 @@ function loadCookies() {
 
 function startSong() {
   startTime = new Date().getTime();
+  let numNotes = notes.length;
   let numRests = Math.floor(numNotes / restInterval);
   finishTime = initialRest + numRests * timePerRest + numNotes * timePerNote + finishRest;
 }
@@ -278,7 +288,7 @@ function renderFrame() {
     let noteScaled = null;
     if (pitchArray.length > 0) {
       let myPitch = calcAvgPitch();
-      $debuginfo.html(noteNameFromNum(Math.round(myPitch)));
+      if (DEBUG) $debuginfo.html(noteNameFromNum(Math.round(myPitch)));
       noteScaled = canvasHeight - 10 - (myPitch - tonic + 12) * rowHeight;
       arrowPosition = Math.min(Math.max(noteScaled, 0), canvasHeight); //clip to available canvas
       //arrow Position only updates if pitchArray is not empty
@@ -453,7 +463,7 @@ async function startGame(newgame) {
     if (newgame || notes.length < 1) {
       let level = selectedLevel;
       console.log("Level: " + level);
-      genMelody(level); //generate the melody notes
+      getMelody(level); //generate the melody notes
     }
 
     //set the tonic to get midpoint = userMiddleNote
@@ -465,6 +475,7 @@ async function startGame(newgame) {
     console.log("Tonic Note: " + noteNameFromNum(tonic));
     console.log("Notes: " + notes.map((x) => noteNameFromNum(notePosition[x] - notePosition[8] + tonic)));
     console.log(notes);
+    console.log("Number of Notes: " + notes.length);
 
     //play the cadence
     if (!DEBUG) {
@@ -482,7 +493,60 @@ async function startGame(newgame) {
   }
 }
 
+function getMelody(level) {
+  //for predefined levels
+  notes = [];
+  switch (level) {
+    case 1: //start tonic, single steps, tonic to tonic+8
+      notes = [8, 9, 10, 11, 12, 13, 14, 15, 14, 13, 12, 11, 10, 9, 8];
+      break;
+    case 2: //start tonic, single steps, tonic to tonic-8
+      notes = [8, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 8];
+      break;
+    case 3:
+      notes = [8, 9, 10, 11, 12, 11, 12, 13, 14, 15, 14, 13, 12, 11, 10, 9, 10, 9, 8];
+      break;
+    case 4:
+      notes = [8, 9, 10, 11, 12, 11, 10, 9, 8, 7, 6, 5, 6, 7, 8, 9, 10, 9, 8, 7, 8];
+      break;
+    case 5:
+      notes = [8, 9, 8, 7, 6, 5, 6, 7, 8, 9, 10, 11, 12, 11, 10, 9, 8, 7, 6, 5];
+      break;
+    case 6:
+      notes = [8, 10, 12, 15, 12, 10, 8, 9, 10, 11, 12, 11, 10, 9, 8, 12, 8];
+      break;
+    case 7:
+      notes = [8, 5, 3, 1, 2, 3, 4, 5, 8, 7, 6, 5, 3, 1, 5, 8, 5, 6, 7, 8];
+      break;
+    case 8:
+      notes = [1, 3, 5, 8, 10, 12, 11, 10, 9, 8, 7, 6, 5, 8, 12, 8, 5, 1, 3, 5, 8];
+      break;
+    case 9:
+      notes = [5, 8, 10, 8, 10, 12, 15, 14, 13, 12, 8, 7, 6, 5, 8, 9, 10, 11, 12, 8];
+      break;
+    case 10:
+      notes = [8, 11, 12, 15, 14, 13, 8, 7, 6, 5, 12, 10, 8, 5, 7, 8, 15, 14, 13, 8];
+      break;
+    case 11:
+      notes = [8, 4, 2, 1, 3, 4, 5, 7, 8, 9, 11, 10, 8, 6, 4, 2, 1, 3, 5, 7, 8];
+      break;
+    case 12:
+      notes = [5, 3, 8, 7, 6, 4, 2, 1, 8, 12, 15, 14, 13, 8, 1, 3, 4, 11, 9, 8];
+      break;
+    case 13:
+      notes = [12, 9, 11, 12, 15, 8, 1, 3, 10, 5, 7, 8, 15, 12, 8, 3, 2, 1, 5, 8];
+      break;
+    case 14:
+      notes = [8, 14, 10, 7, 2, 5, 10, 15, 13, 6, 2, 1, 6, 4, 5, 8, 11, 4, 6, 7, 8];
+      break;
+    case 15:
+      notes = [2, 6, 3, 12, 9, 3, 5, 12, 15, 9, 3, 7, 12, 14, 15, 12, 7, 8, 14, 7, 4, 8];
+      break;
+  }
+}
+
 function genMelody(level) {
+  //for custom levels
   notes = [];
   let nextNote = null;
   let minNote = null;
@@ -612,7 +676,6 @@ function updatePitch() {
     }
   } else {
     pitchFound = pitchFoundThresh; //reset counter when pitch is found
-    // if (DEBUG) console.log(pitch);
     let x = noteNumFromPitch(pitch);
     pitchArray.push(x);
     if (pitchArray.length > pitchAvgLength) {

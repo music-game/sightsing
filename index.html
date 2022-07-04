@@ -58,9 +58,11 @@
             <button class="levelsel" value="12">Level 12</button>
             <button class="levelsel" value="13">Level 13</button>
             <button class="levelsel" value="14">Level 14</button>
+            <button class="levelsel" value="15">Level 15</button>
           </div>
           <div class="columndata scorelist">
             <div class="subtitle">Best Score</div>
+            <div class="bestscore">--</div>
             <div class="bestscore">--</div>
             <div class="bestscore">--</div>
             <div class="bestscore">--</div>
@@ -88,7 +90,7 @@
         </div>
         <div class="columngrid">
           <div class="widecolumn">
-            <div class="settingtext">Middle of Comfortable Vocal Range:</div>
+            <div class="settingtext">Middle of Your Comfortable Vocal Range:</div>
           </div>
           <div class="narrowcolumn">
             <div class="settingtext">
@@ -126,14 +128,28 @@
       <!-- Help Page -->
       <div class="helptab" hidden="true">
         <div class="title">Help</div>
-        <div class="paragraph">
+        <button class="closetab">Close</button>
+        <div class="paragraph left">
           <p>Welcome to Sight-Singer.</p>
           <p>
             Before you play, be sure to open the settings and set the note closest to the middle of your comfortable vocal range. The melodies will
             all be centered around this note.
           </p>
+          <p>
+            When starting a new game, you can choose one of the built-in levels, which get progressively harder, or you can generate a random level
+            with custom parameters.
+          </p>
+          <p>
+            When the level begins, you will hear a cadance followed by the tonic note. The tonic note is the note labeled "1" in the center of the
+            gameboard.
+          </p>
+          <p>
+            You will then need to sing the notes that appear on the gameboard. Each note is numbered relative to the tonic note. Sing the notes as
+            they cross the black line. The arrow will show you the note you are singing. The arrow turns green if you are hitting the correct note.
+          </p>
+          <p>Your score for each note is calculated by how long you remain on the note and how accurate your pitch is.</p>
         </div>
-        <button class="closetab">Done</button>
+        <button class="closetab">Close</button>
       </div>
     </div>
   </body>
