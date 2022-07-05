@@ -1,11 +1,10 @@
 /// <reference path="../typings/globals/jquery/index.d.ts" />
 
 //TODO:
-//custom level generator
-//try different tone generator library to see if it is better
+//build custom level config page
 //see if we can improve pitch detection. maybe allow settings to adjust some of the detector settings.
 
-const DEBUG = false;
+const DEBUG = true;
 // const Pitchfinder = require("pitchfinder");
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
@@ -62,7 +61,7 @@ var finishTime = null;
 var time = null;
 var currentNote = 0;
 var prevNote = 0;
-var selectedLevel = 1;
+var selectedLevel = 0;
 
 //scoring variables
 var noteScoreArray = [];
@@ -137,14 +136,21 @@ $(document).ready(function () {
 
   $startgame.click(function () {
     hideTabs();
-    startGame(false);
+    startGame(false, false);
+  });
+
+  $("button.customlevel").click(function () {
+    selectedLevel = 0;
+    console.log("Level: Custom");
+    hideTabs();
+    startGame(true, true);
   });
 
   $("button.levelsel").click(function () {
     selectedLevel = parseInt($(this).val());
     console.log("Level: " + selectedLevel);
     hideTabs();
-    startGame(true);
+    startGame(true, false);
   });
 
   $("button.applysettings").click(function () {
@@ -451,7 +457,7 @@ function stopGame() {
   stopSong();
 }
 
-async function startGame(newgame) {
+async function startGame(newgame, custom) {
   let connection = false;
   connection = await getMedia(); //get the microphone working
   if (connection) {
@@ -469,9 +475,13 @@ async function startGame(newgame) {
     $score.html("--");
     $progress.html("--");
     if (newgame || notes.length < 1) {
-      let level = selectedLevel;
-      console.log("Level: " + level);
-      getMelody(level); //generate the melody notes
+      if (custom) {
+        genMelody();
+      } else {
+        let level = selectedLevel;
+        console.log("Level: " + level);
+        getMelody(level); //generate the melody notes
+      }
     }
 
     //set the tonic to get midpoint = userMiddleNote
@@ -553,58 +563,108 @@ function getMelody(level) {
   }
 }
 
-function genMelody(level) {
+function genMelody() {
   //for custom levels
-  notes = [];
-  let nextNote = null;
-  let minNote = null;
-  let maxNote = null;
-  let maxStep = null;
-  let up = 0;
-  let count = getRandomInt(1, 8);
-  switch (level) {
-    case 1: //start tonic, single steps, tonic to tonic+8
-      nextNote = 8;
-      up = 1;
-      minNote = 8;
-      maxNote = 15;
-      maxStep = 1;
+  let possibleNotes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+  let minArray = [1, 5, 8];
+  let maxArray = [8, 12, 15];
+
+  let minSel = 0; //octave below, 5th below, tonic
+  let maxSel = 2; //tonic, 5th above, octave above
+  let noteTypeSel = 4;
+  let maxJump = 14; //options: 1, 2, 3, 4, 7, or 14
+  let startSel = 1; //tonic, random
+  let melodyLength = 20;
+
+  let minNote = minArray[minSel];
+  let maxNote = maxArray[maxSel];
+
+  //first filter by the type of notes allowed
+  switch (noteTypeSel) {
+    case 1: //7,1,2,3
+      possibleNotes = [1, 2, 3, 7, 8, 9, 10, 14, 15];
       break;
-    case 2: //start tonic, single steps, tonic to tonic-8
-      nextNote = 8;
-      up = 0;
-      minNote = 1;
-      maxNote = 8;
-      maxStep = 1;
+    case 2: //1,3,5
+      possibleNotes = [1, 3, 5, 8, 10, 12, 15];
       break;
-    case 3: //start tonic, single steps, tonic-3 to tonic+4
-      nextNote = 8;
-      up = getRandomInt(0, 1);
-      minNote = 5;
-      maxNote = 12;
-      maxStep = 1;
-      count = getRandomInt(1, 5);
+    case 3: //1,2,3,4,5
+      possibleNotes = [1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 15];
+      break;
+    case 4: //all notes
+      possibleNotes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
       break;
   }
+  //then filter by the max and min notes
+  possibleNotes = possibleNotes.filter(function (x) {
+    return x >= minNote && x <= maxNote;
+  });
+  let numPosNotes = possibleNotes.length;
+  console.log("Possible Notes: " + possibleNotes);
+  console.log("Max Jump: " + maxJump);
+  maxNote = possibleNotes[numPosNotes - 1];
+  minNote = possibleNotes[0];
 
-  for (let i = 0; i < numNotes; i++) {
-    notes.push(nextNote);
-    if (up == 1) {
-      nextNote = Math.min(maxNote, nextNote + getRandomInt(1, maxStep));
-      count--;
-      if (nextNote == maxNote || count < 1) {
-        count = getRandomInt(1, 5);
-        up = false;
+  //set starting note
+  let thisNote = 8;
+  if (startSel > 0) {
+    //choose a random starting note
+    thisNote = possibleNotes[getRandomInt(0, numPosNotes - 1)];
+  }
+
+  //fill the note array
+  notes = [];
+  for (let i = 0; i < melodyLength; i++) {
+    notes.push(thisNote);
+    if (numPosNotes > 1) {
+      //only change the note if we have more than 1 note to pick from
+      let direction = stepUpDown() ? 1 : 2; // 1 = up, 2 = down
+      //find note above and below this one
+      let thisNoteIndex = possibleNotes.indexOf(thisNote);
+      let noteAbove = possibleNotes[thisNoteIndex + 1];
+      let noteBelow = possibleNotes[thisNoteIndex - 1];
+      //check if stepping up is possible
+      if (thisNote == maxNote || noteAbove - thisNote > maxJump) {
+        direction = 2; //have to step down
       }
-    } else {
-      nextNote = Math.max(minNote, nextNote - getRandomInt(1, maxStep));
-      count--;
-      if (nextNote == minNote || count < 1) {
-        count = getRandomInt(1, 5);
-        up = true;
+      //check if stepping down is possible
+      if (thisNote == minNote || thisNote - noteBelow > maxJump) {
+        direction = 1; //have to step up
+      }
+      //see if we can step at all
+      if ((thisNote == maxNote || noteAbove - thisNote > maxJump) && (thisNote == minNote || thisNote - noteBelow > maxJump)) {
+        direction = 0; //can't step at all
+      }
+
+      //figure out which note to jump to
+      if (direction == 1) {
+        //find highest note we can jump to that meets criteria
+        let highNote = thisNote + maxJump;
+        let highestIndex = possibleNotes.indexOf(highNote);
+        while (highestIndex < 0) {
+          highNote--;
+          highestIndex = possibleNotes.indexOf(highNote);
+        }
+        //pick a note index between the current note+1 and highNote
+        thisNote = possibleNotes[getRandomInt(thisNoteIndex + 1, highestIndex)];
+      } else if (direction == 2) {
+        //find lowest note we can jump to that meets criteria
+        let lowNote = thisNote - maxJump;
+        let lowestIndex = possibleNotes.indexOf(lowNote);
+        while (lowestIndex < 0) {
+          lowNote++;
+          lowestIndex = possibleNotes.indexOf(lowNote);
+        }
+        //pick a note index between the current note-1 and lowNote
+        thisNote = possibleNotes[getRandomInt(thisNoteIndex - 1, lowestIndex)];
       }
     }
   }
+
+  function stepUpDown() {
+    //randomly returns true or false
+    return Math.random() < 0.5;
+  }
+
   function getRandomInt(min, max) {
     //inclusive of min and max
     return Math.floor(Math.random() * (max + 1 - min) + min);
