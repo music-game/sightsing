@@ -82,7 +82,8 @@ svg {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: Impact, fantasy;
+  font-family: "Righteous", fantasy;
+  /* font-family: Charcoal, fantasy; */
   font-weight: 100;
   font-size: 30px;
   height: 40px;
