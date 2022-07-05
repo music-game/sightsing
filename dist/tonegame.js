@@ -394,46 +394,39 @@ function renderFrame() {
 
 async function getMedia() {
   if (stream == null) {
-    // try {
-    audioContext = new AudioContext();
-    stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: false,
-    });
-    // Create an AudioNode from the stream.
-    mediaStreamSource = audioContext.createMediaStreamSource(stream);
-    sampleRate = audioContext.sampleRate;
-    console.log(sampleRate);
+    try {
+      audioContext = new AudioContext();
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
+      // Create an AudioNode from the stream.
+      mediaStreamSource = audioContext.createMediaStreamSource(stream);
+      sampleRate = audioContext.sampleRate;
+      console.log(sampleRate);
 
-    // Connect it to the destination.
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 2048;
-    mediaStreamSource.connect(analyser);
+      // Connect it to the destination.
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 2048;
+      mediaStreamSource.connect(analyser);
 
-    // Initialize the pitch detector
-    // detectPitch = Pitchfinder.AMDF({
-    detectPitch = AMDF({
-      sampleRate: sampleRate,
-      minFrequency: 78,
-      maxFrequency: 1000,
-      ratio: 5,
-      sensitivity: 0.1,
-    });
+      // Initialize the pitch detector
+      detectPitch = AMDF({
+        sampleRate: sampleRate,
+        minFrequency: 78,
+        maxFrequency: 1000,
+        ratio: 5,
+        sensitivity: 0.1,
+      });
 
-    // detectPitch = Pitchfinder.YIN({
-    //   sampleRate: sampleRate,
-    //   threshold: 0.1,
-    //   probabilityThreshold: 0.1,
-    // });
-
-    return true;
-    // } catch (err) {
-    //   console.log("failed to get stream");
-    //   alert(
-    //     "Can't access microphone. Make sure you allow microphone access, and nothing else is using the microphone. \nIf this still doesn't work, you may need to restart your device."
-    //   );
-    //   return false;
-    // }
+      return true;
+    } catch (err) {
+      console.log("failed to get stream");
+      alert(
+        "Can't access microphone. Make sure you allow microphone access, and nothing else is using the microphone. \nIf this still doesn't work, you may need to restart your device."
+      );
+      return false;
+    }
   }
 }
 
