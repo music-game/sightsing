@@ -62,8 +62,10 @@
               <div class="settingtext">Highest Note:</div>
               <div class="settingtext">Notes Allowed:</div>
               <div class="settingtext">Max Jump:</div>
-              <div class="settingtext">Starting Note:</div>
               <div class="settingtext">Melody Length:</div>
+              <div class="settingtext">Number of Notes Between Rests:</div>
+              <div class="settingtext">Force Return to Tonic Every X Notes:</div>
+              <div class="settingtext">Starting Note:</div>
             </div>
             <div class="columndata">
               <div class="subtitle">Selection</div>
@@ -100,12 +102,6 @@
                 </select>
               </div>
               <div class="settingtext">
-                <select class="startnotesel">
-                  <option value="0">Tonic</option>
-                  <option value="1">Random</option>
-                </select>
-              </div>
-              <div class="settingtext">
                 <select class="lengthsel">
                   <option value="5">5</option>
                   <option value="10">10</option>
@@ -114,6 +110,33 @@
                   <option value="30">30</option>
                   <option value="50">50</option>
                   <option value="100">100</option>
+                </select>
+              </div>
+              <div class="settingtext">
+                <select class="restsel">
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4" selected="true">4</option>
+                  <option value="6">6</option>
+                  <option value="8">8</option>
+                  <option value="1000">No Rests</option>
+                </select>
+              </div>
+              <div class="settingtext">
+                <select class="returntonicsel">
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="6">6</option>
+                  <option value="8">8</option>
+                  <option value="1000" selected="true">Never</option>
+                </select>
+              </div>
+              <div class="settingtext">
+                <select class="startnotesel">
+                  <option value="0">Tonic</option>
+                  <option value="1">Random</option>
                 </select>
               </div>
             </div>
@@ -209,24 +232,35 @@
         <div class="title">Help</div>
         <button class="closetab">Close</button>
         <div class="paragraph left">
-          <p>Welcome to Sight-Singer.</p>
+          <h2>Setup</h2>
           <p>
             Before you play, be sure to open the settings and set the note closest to the middle of your comfortable vocal range. The melodies will
             all be centered around this note. If you aren't sure, start with 'A3' for men or 'D4' for women.
           </p>
+          <h2>How to Play</h2>
+          <p>
+            When the level begins, you will hear a cadence for the key you are in followed by the tonic note. The tonic note is the note labeled "1"
+            in the center of the gameboard. You will then need to sing the notes that appear on the gameboard. Each note is numbered relative to the
+            tonic note.
+          </p>
+          <p>
+            Sing the notes as they cross the black line. The arrow will follow the pitch you are singing. The arrow turns green if you are singing the
+            correct note.
+          </p>
+          <p>
+            You can either hum the note, sing the number of the note, or just sing a vowel of your choice (like ooh or aah). Make sure to take breaths
+            during the rests that occur between every four notes.
+          </p>
+          <h2>Scoring</h2>
+          <p>
+            Your score for each note is calculated by how long you remain on the note and how accurate your pitch is. To get a perfect score on a
+            note, you need to hold the correct pitch for roughly half of the note's duration or longer.
+          </p>
+          <h2>Starting a Game</h2>
           <p>
             When starting a new game, you can choose one of the standard levels, which get progressively harder, or you can generate a random level
             with custom parameters.
           </p>
-          <p>
-            When the level begins, you will hear a cadance followed by the tonic note. The tonic note is the note labeled "1" in the center of the
-            gameboard.
-          </p>
-          <p>
-            You will then need to sing the notes that appear on the gameboard. Each note is numbered relative to the tonic note. Sing the notes as
-            they cross the black line. The arrow will show you the note you are singing. The arrow turns green if you are hitting the correct note.
-          </p>
-          <p>Your score for each note is calculated by how long you remain on the note and how accurate your pitch is.</p>
         </div>
         <button class="closetab">Close</button>
       </div>

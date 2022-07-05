@@ -13,7 +13,6 @@ if (DEBUG) {
   timePerNote = 500; //ms
   timePerRest = 500; //ms
 }
-const restInterval = 4; //notes between each rest
 const initialRest = 1000; //ms
 const finishRest = 2000; //ms
 const staffColors = ["LimeGreen", "gray", "salmon", "gray", "yellow", "DeepSkyBlue", "gray", "crimson", "gray", "orange", "gray", "violet"];
@@ -57,6 +56,7 @@ var time = null;
 var currentNote = 0;
 var prevNote = 0;
 var selectedLevel = 0;
+var restInterval = 4; //notes between each rest
 
 //scoring variables
 var noteScoreArray = [];
@@ -141,6 +141,18 @@ $(document).ready(function () {
     $levelgrid.hide();
     $(this).addClass("active").removeClass("inactive");
     $("button.standardlevel").addClass("inactive").removeClass("active");
+  });
+
+  //don't allow random start note when return to tonic is enabled
+  $("select.returntonicsel").on("change", "", function (e) {
+    var valueSelected = this.value;
+    console.log(valueSelected);
+    if (valueSelected > 500) {
+      $("select.startnotesel").prop("disabled", false);
+    } else {
+      $("select.startnotesel").prop("disabled", true);
+      $("select.startnotesel").val("0");
+    }
   });
 
   $("button.standardlevel").click(function () {
@@ -332,142 +344,6 @@ function renderFrame() {
   }
 }
 
-function hideTabs() {
-  $newtab.hide();
-  $settingstab.hide();
-  $helptab.hide();
-  $resettab.hide();
-}
-
-function clearProgress() {
-  console.log("clearing progress");
-  var count = $(".scorelist").children().length;
-  for (let i = 1; i <= count; i++) {
-    Cookies.remove(i);
-  }
-}
-
-function loadCookies() {
-  //First load any saved settings
-  let firstvisit = false;
-  userMiddleNote = parseInt(Cookies.get("middlenote"));
-  if (userMiddleNote == undefined) {
-    firstvisit = true;
-    userMiddleNote = 57; //default to A3
-    Cookies.set("middlenote", userMiddleNote, { expires: 3650 });
-  }
-  $notesel.val(userMiddleNote);
-
-  //Then load Scores
-  var count = $(".scorelist").children().length;
-  for (let i = 1; i <= count; i++) {
-    let myScore = Cookies.get(i);
-    if (myScore != undefined) {
-      myScore = parseFloat(myScore);
-      $(".scorelist")
-        .children()
-        .eq(i)
-        .html(myScore.toFixed(myScore > 99.95 ? 0 : 1) + "%");
-    } else {
-      $(".scorelist").children().eq(i).html("--");
-    }
-  }
-
-  //let the page know if it is the user's first visit
-  return firstvisit;
-}
-
-function startSong() {
-  startTime = new Date().getTime();
-  let numNotes = notes.length;
-  let numRests = Math.floor(numNotes / restInterval);
-  finishTime = initialRest + numRests * timePerRest + numNotes * timePerNote + finishRest;
-}
-
-function stopSong() {
-  startTime = null;
-  gameCanvas.clearRect(0, 0, canvasWidth, canvasHeight);
-  window.cancelAnimationFrame(myAniReq);
-}
-
-function calcAvgPitch() {
-  let myPitch = 0;
-  var total = 0;
-  var minval = Infinity;
-  var maxval = -Infinity;
-  for (var i = 0; i < pitchArray.length; i++) {
-    tempval = pitchArray[i];
-    total += tempval;
-    if (tempval < minval) minval = tempval;
-    if (tempval > maxval) maxval = tempval;
-  }
-  if (pitchArray.length < pitchAvgLength) {
-    myPitch = total / pitchArray.length;
-  } else {
-    myPitch = (total - minval - maxval) / (pitchArray.length - 2);
-  }
-  return myPitch;
-}
-
-async function getMedia() {
-  if (stream == null) {
-    try {
-      audioContext = new AudioContext();
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: false,
-      });
-      // Create an AudioNode from the stream.
-      mediaStreamSource = audioContext.createMediaStreamSource(stream);
-      sampleRate = audioContext.sampleRate;
-      console.log(sampleRate);
-
-      // Connect it to the destination.
-      analyser = audioContext.createAnalyser();
-      analyser.fftSize = 2048;
-      mediaStreamSource.connect(analyser);
-
-      // Initialize the pitch detector
-      detectPitch = AMDF({
-        sampleRate: sampleRate,
-        minFrequency: 78,
-        maxFrequency: 1000,
-        ratio: 5,
-        sensitivity: 0.1,
-      });
-
-      return true;
-    } catch (err) {
-      console.log("failed to get stream");
-      alert(
-        "Can't access microphone. Make sure you allow microphone access, and nothing else is using the microphone. \nIf this still doesn't work, you may need to restart your device."
-      );
-      return false;
-    }
-  }
-}
-
-function stopGame() {
-  $stopgame.prop("disabled", true);
-  $startgame.prop("disabled", false);
-  $newgame.prop("disabled", false);
-  $showsettings.prop("disabled", false);
-  if (stream != null) {
-    stream.getAudioTracks().forEach((track) => {
-      track.stop();
-    });
-    console.log("stopping mic");
-    stream = null;
-    audioContext.close();
-  }
-  //save score
-  let bestScore = Cookies.get(selectedLevel);
-  if (bestScore == undefined || currentScore > bestScore) {
-    Cookies.set(selectedLevel, Math.round(currentScore * 10) / 10, { expires: 3650 });
-  }
-  stopSong();
-}
-
 async function startGame(newgame, custom) {
   let connection = false;
   connection = await getMedia(); //get the microphone working
@@ -522,8 +398,43 @@ async function startGame(newgame, custom) {
   }
 }
 
+function startSong() {
+  startTime = new Date().getTime();
+  let numNotes = notes.length;
+  let numRests = Math.floor(numNotes / restInterval);
+  finishTime = initialRest + numRests * timePerRest + numNotes * timePerNote + finishRest;
+}
+
+function stopGame() {
+  $stopgame.prop("disabled", true);
+  $startgame.prop("disabled", false);
+  $newgame.prop("disabled", false);
+  $showsettings.prop("disabled", false);
+  if (stream != null) {
+    stream.getAudioTracks().forEach((track) => {
+      track.stop();
+    });
+    console.log("stopping mic");
+    stream = null;
+    audioContext.close();
+  }
+  //save score
+  let bestScore = Cookies.get(selectedLevel);
+  if (bestScore == undefined || currentScore > bestScore) {
+    Cookies.set(selectedLevel, Math.round(currentScore * 10) / 10, { expires: 3650 });
+  }
+  stopSong();
+}
+
+function stopSong() {
+  startTime = null;
+  gameCanvas.clearRect(0, 0, canvasWidth, canvasHeight);
+  window.cancelAnimationFrame(myAniReq);
+}
+
 function getMelody(level) {
   //for predefined levels
+  restInterval = 4;
   notes = [];
   switch (level) {
     case 1: //start tonic, single steps, tonic to tonic+8
@@ -586,6 +497,10 @@ function genMelody() {
   let maxJump = parseInt($(".jumpsel").val()); //options: 1, 2, 3, 4, 7, or 14
   let startSel = parseInt($(".startnotesel").val()); //tonic, random
   let melodyLength = parseInt($(".lengthsel").val());
+  let restsel = parseInt($(".restsel").val());
+  let returntonic = parseInt($(".returntonicsel").val());
+
+  restInterval = restsel;
 
   let minNote = minArray[minSel];
   let maxNote = maxArray[maxSel];
@@ -668,6 +583,10 @@ function genMelody() {
         //pick a note index between the current note-1 and lowNote
         thisNote = possibleNotes[getRandomInt(thisNoteIndex - 1, lowestIndex)];
       }
+      //if force return to tonic is set, override with the tonic
+      if ((i + 1) % returntonic == 0) {
+        thisNote = 8;
+      }
     }
   }
 
@@ -713,6 +632,129 @@ function playNote(noteNum) {
   piano.play(noteName, noteNumber, 2);
 }
 
+async function getMedia() {
+  if (stream == null) {
+    try {
+      audioContext = new AudioContext();
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
+      // Create an AudioNode from the stream.
+      mediaStreamSource = audioContext.createMediaStreamSource(stream);
+      sampleRate = audioContext.sampleRate;
+      console.log(sampleRate);
+
+      // Connect it to the destination.
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 2048;
+      mediaStreamSource.connect(analyser);
+
+      // Initialize the pitch detector
+      detectPitch = AMDF({
+        sampleRate: sampleRate,
+        minFrequency: 78,
+        maxFrequency: 1000,
+        ratio: 5,
+        sensitivity: 0.1,
+      });
+
+      return true;
+    } catch (err) {
+      console.log("failed to get stream");
+      alert(
+        "Can't access microphone. Make sure you allow microphone access, and nothing else is using the microphone. \nIf this still doesn't work, you may need to restart your device."
+      );
+      return false;
+    }
+  }
+}
+
+function hideTabs() {
+  $newtab.hide();
+  $settingstab.hide();
+  $helptab.hide();
+  $resettab.hide();
+}
+
+function clearProgress() {
+  console.log("clearing progress");
+  var count = $(".scorelist").children().length;
+  for (let i = 1; i <= count; i++) {
+    Cookies.remove(i);
+  }
+}
+
+function loadCookies() {
+  //First load any saved settings
+  let firstvisit = false;
+  userMiddleNote = parseInt(Cookies.get("middlenote"));
+  if (userMiddleNote == undefined) {
+    firstvisit = true;
+    userMiddleNote = 57; //default to A3
+    Cookies.set("middlenote", userMiddleNote, { expires: 3650 });
+  }
+  $notesel.val(userMiddleNote);
+
+  //Then load Scores
+  var count = $(".scorelist").children().length;
+  for (let i = 1; i <= count; i++) {
+    let myScore = Cookies.get(i);
+    if (myScore != undefined) {
+      myScore = parseFloat(myScore);
+      $(".scorelist")
+        .children()
+        .eq(i)
+        .html(myScore.toFixed(myScore > 99.95 ? 0 : 1) + "%");
+    } else {
+      $(".scorelist").children().eq(i).html("--");
+    }
+  }
+
+  //let the page know if it is the user's first visit
+  return firstvisit;
+}
+
+function updatePitch() {
+  const array32 = new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(array32);
+
+  var pitch = detectPitch(array32);
+
+  if (pitch == null) {
+    pitchFound--; //subtract one from pitchFound counter
+    if (pitchFound < 1) {
+      pitchArray = []; //reset the pitchArray when pitchFound = 0
+    }
+  } else {
+    pitchFound = pitchFoundThresh; //reset counter when pitch is found
+    let x = noteNumFromPitch(pitch);
+    pitchArray.push(x);
+    if (pitchArray.length > pitchAvgLength) {
+      pitchArray.shift();
+    }
+  }
+}
+
+function calcAvgPitch() {
+  let myPitch = 0;
+  var total = 0;
+  var minval = Infinity;
+  var maxval = -Infinity;
+  for (var i = 0; i < pitchArray.length; i++) {
+    tempval = pitchArray[i];
+    total += tempval;
+    if (tempval < minval) minval = tempval;
+    if (tempval > maxval) maxval = tempval;
+  }
+  if (pitchArray.length < pitchAvgLength) {
+    myPitch = total / pitchArray.length;
+  } else {
+    myPitch = (total - minval - maxval) / (pitchArray.length - 2);
+  }
+  return myPitch;
+}
+
 function drawStaff() {
   staffCanvas.clearRect(0, 0, canvasWidth, canvasHeight);
   const numbers = ["1", " ", "2", " ", "3", "4", " ", "5", " ", "6", " ", "7"];
@@ -740,27 +782,6 @@ function drawGame() {
   renderFrame();
   updatePitch();
   myAniReq = window.requestAnimationFrame(drawGame);
-}
-
-function updatePitch() {
-  const array32 = new Float32Array(analyser.fftSize);
-  analyser.getFloatTimeDomainData(array32);
-
-  var pitch = detectPitch(array32);
-
-  if (pitch == null) {
-    pitchFound--; //subtract one from pitchFound counter
-    if (pitchFound < 1) {
-      pitchArray = []; //reset the pitchArray when pitchFound = 0
-    }
-  } else {
-    pitchFound = pitchFoundThresh; //reset counter when pitch is found
-    let x = noteNumFromPitch(pitch);
-    pitchArray.push(x);
-    if (pitchArray.length > pitchAvgLength) {
-      pitchArray.shift();
-    }
-  }
 }
 
 function noteNumFromPitch(frequency) {
