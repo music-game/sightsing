@@ -4,7 +4,7 @@
 //build custom level config page
 //see if we can improve pitch detection. maybe allow settings to adjust some of the detector settings.
 
-const DEBUG = true;
+const DEBUG = false;
 // const Pitchfinder = require("pitchfinder");
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
