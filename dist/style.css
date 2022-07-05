@@ -60,7 +60,7 @@ svg {
 
 .board {
   width: 800px;
-  height: 650px;
+  height: 675px;
   /* border: 1px solid #000; */
   border-radius: 10px;
   margin-top: 2px;
@@ -166,10 +166,10 @@ canvas#staff {
 .helptab {
   position: absolute;
   overflow: auto;
-  top: 325px;
+  top: 335px;
   left: 50%;
   width: min(500px, 90%);
-  height: 600px;
+  height: 650px;
   transform: translate(-50%, -50%);
   background-color: rgb(194, 194, 194);
   z-index: 100;

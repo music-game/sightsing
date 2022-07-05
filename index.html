@@ -3,13 +3,13 @@
   <head>
     <link rel="shortcut icon" href="#" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
-    <link rel="stylesheet" href="./dist/style.css?version=1" />
     <title>Sight-Singer</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
-    <script src="dist/tonegame.js?version=1"></script>
-    <script src="dist/audiosynth.js?version=1"></script>
-    <script src="dist/pitchdetector.js?version=1"></script>
+    <link rel="stylesheet" href="./dist/style.css?version=2" />
+    <script src="dist/tonegame.js?version=2"></script>
+    <script src="dist/audiosynth.js?version=2"></script>
+    <script src="dist/pitchdetector.js?version=2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Righteous&display=swap" rel="stylesheet" />
@@ -64,7 +64,7 @@
               <div class="settingtext">Max Jump:</div>
               <div class="settingtext">Melody Length:</div>
               <div class="settingtext">Number of Notes Between Rests:</div>
-              <div class="settingtext">Force Return to Tonic Every X Notes:</div>
+              <div class="settingtext">Force Return to Tonic Every:</div>
               <div class="settingtext">Starting Note:</div>
             </div>
             <div class="columndata">
@@ -125,11 +125,11 @@
               </div>
               <div class="settingtext">
                 <select class="returntonicsel">
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="6">6</option>
-                  <option value="8">8</option>
+                  <option value="2">2 Notes</option>
+                  <option value="3">3 Notes</option>
+                  <option value="4">4 Notes</option>
+                  <option value="6">6 Notes</option>
+                  <option value="8">8 Notes</option>
                   <option value="1000" selected="true">Never</option>
                 </select>
               </div>
