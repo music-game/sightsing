@@ -688,11 +688,13 @@ function clearProgress() {
 function loadCookies() {
   //First load any saved settings
   let firstvisit = false;
-  userMiddleNote = parseInt(Cookies.get("middlenote"));
+  userMiddleNote = Cookies.get("middlenote");
   if (userMiddleNote == undefined) {
     firstvisit = true;
     userMiddleNote = 57; //default to A3
     Cookies.set("middlenote", userMiddleNote, { expires: 3650 });
+  } else {
+    userMiddleNote = parseInt(Cookies.get("middlenote"));
   }
   $notesel.val(userMiddleNote);
 
