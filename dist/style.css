@@ -46,6 +46,13 @@ button.showhelp {
   margin: 0;
 }
 
+button.active {
+  background: grey;
+}
+button.inactive {
+  background: white;
+}
+
 svg {
   display: inline-block;
   vertical-align: middle;
@@ -203,13 +210,13 @@ canvas#staff {
   flex-direction: column;
 }
 .narrowcolumn {
-  width: 25%;
+  width: 35%;
   display: flexbox;
   flex-direction: column;
   padding: 0px 10px 0px 10px;
 }
 .widecolumn {
-  width: 75%;
+  width: 65%;
   display: flexbox;
   flex-direction: column;
 }
@@ -265,7 +272,7 @@ canvas#staff {
   text-align: center;
 }
 select {
-  width: 80px;
+  width: 90%;
   padding: 5px;
   font-size: 16px;
   font-weight: 700;

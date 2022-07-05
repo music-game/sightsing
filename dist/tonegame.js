@@ -1,9 +1,5 @@
 /// <reference path="../typings/globals/jquery/index.d.ts" />
 
-//TODO:
-//build custom level config page
-//see if we can improve pitch detection. maybe allow settings to adjust some of the detector settings.
-
 const DEBUG = false;
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
@@ -32,8 +28,8 @@ var staffCanvas, gameCanvas, canvasWidth, dpr;
 var myAniReq = null;
 
 //jquery variables
-var $score, $progress, $staff, $game, $board, $startgame, $newgame, $stopgame, $resettab;
-var $notesel, $debuginfo, $newtab, $settingstab, $helptab, $showsettings, $scorelist;
+var $score, $progress, $staff, $game, $board, $startgame, $newgame, $stopgame, $resettab, $customtab;
+var $notesel, $debuginfo, $newtab, $settingstab, $helptab, $showsettings, $scorelist, $levelgrid;
 
 //variables for audiocontext and playing tones
 var audioContext = null;
@@ -90,6 +86,8 @@ $(document).ready(function () {
   $resettab = $(".resettab");
   $helptab = $(".helptab");
   $scorelist = $(".scorelist");
+  $customtab = $(".customtab");
+  $levelgrid = $(".levelgrid");
 
   dpr = window.devicePixelRatio || 1;
   let w = window.innerWidth;
@@ -139,6 +137,20 @@ $(document).ready(function () {
   });
 
   $("button.customlevel").click(function () {
+    $customtab.show();
+    $levelgrid.hide();
+    $(this).addClass("active").removeClass("inactive");
+    $("button.standardlevel").addClass("inactive").removeClass("active");
+  });
+
+  $("button.standardlevel").click(function () {
+    $levelgrid.show();
+    $customtab.hide();
+    $(this).addClass("active").removeClass("inactive");
+    $("button.customlevel").addClass("inactive").removeClass("active");
+  });
+
+  $("button.startcustom").click(function () {
     selectedLevel = 0;
     console.log("Level: Custom");
     hideTabs();
@@ -338,7 +350,7 @@ function clearProgress() {
 function loadCookies() {
   //First load any saved settings
   let firstvisit = false;
-  userMiddleNote = Cookies.get("middlenote");
+  userMiddleNote = parseInt(Cookies.get("middlenote"));
   if (userMiddleNote == undefined) {
     firstvisit = true;
     userMiddleNote = 57; //default to A3
@@ -568,28 +580,28 @@ function genMelody() {
   let minArray = [1, 5, 8];
   let maxArray = [8, 12, 15];
 
-  let minSel = 0; //octave below, 5th below, tonic
-  let maxSel = 2; //tonic, 5th above, octave above
-  let noteTypeSel = 4;
-  let maxJump = 14; //options: 1, 2, 3, 4, 7, or 14
-  let startSel = 1; //tonic, random
-  let melodyLength = 20;
+  let minSel = parseInt($(".minsel").val()); //octave below, 5th below, tonic
+  let maxSel = parseInt($(".maxsel").val()); //tonic, 5th above, octave above
+  let noteTypeSel = parseInt($(".notetypesel").val());
+  let maxJump = parseInt($(".jumpsel").val()); //options: 1, 2, 3, 4, 7, or 14
+  let startSel = parseInt($(".startnotesel").val()); //tonic, random
+  let melodyLength = parseInt($(".lengthsel").val());
 
   let minNote = minArray[minSel];
   let maxNote = maxArray[maxSel];
 
   //first filter by the type of notes allowed
   switch (noteTypeSel) {
-    case 1: //7,1,2,3
+    case 0: //7,1,2,3
       possibleNotes = [1, 2, 3, 7, 8, 9, 10, 14, 15];
       break;
-    case 2: //1,3,5
+    case 1: //1,3,5
       possibleNotes = [1, 3, 5, 8, 10, 12, 15];
       break;
-    case 3: //1,2,3,4,5
+    case 2: //1,2,3,4,5
       possibleNotes = [1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 15];
       break;
-    case 4: //all notes
+    case 3: //all notes
       possibleNotes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
       break;
   }
