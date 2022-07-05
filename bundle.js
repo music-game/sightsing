@@ -2,8 +2,8 @@
 /// <reference path="../typings/globals/jquery/index.d.ts" />
 
 //TODO:
-//better colors for buttons/score
 //custom level generator
+//see if we can unbundle the pitch detector
 //try different tone generator library to see if it is better
 //see if we can improve pitch detection. maybe allow settings to adjust some of the detector settings.
 
@@ -121,7 +121,11 @@ $(document).ready(function () {
   Synth.setVolume(0.5); // set volume [0-1]
 
   //load cookies
-  loadCookies();
+  let firstvisit = loadCookies();
+  if (firstvisit) {
+    hideTabs();
+    $helptab.show();
+  }
 
   $stopgame.click(function () {
     stopGame();
@@ -194,9 +198,12 @@ function clearProgress() {
 
 function loadCookies() {
   //First load any saved settings
+  let firstvisit = false;
   userMiddleNote = Cookies.get("middlenote");
   if (userMiddleNote == undefined) {
+    firstvisit = true;
     userMiddleNote = 57; //default to A3
+    Cookies.set("middlenote", userMiddleNote, { expires: 3650 });
   }
   $notesel.val(userMiddleNote);
 
@@ -214,6 +221,9 @@ function loadCookies() {
       $(".scorelist").children().eq(i).html("--");
     }
   }
+
+  //let the page know if it is the user's first visit
+  return firstvisit;
 }
 
 function startSong() {
