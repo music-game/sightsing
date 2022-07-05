@@ -5,7 +5,6 @@
 //see if we can improve pitch detection. maybe allow settings to adjust some of the detector settings.
 
 const DEBUG = false;
-// const Pitchfinder = require("pitchfinder");
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
 //canvas constants
@@ -67,7 +66,7 @@ var selectedLevel = 0;
 var noteScoreArray = [];
 var currentScore = 0;
 var currentProgress = 0;
-const perfScoreVal = 1;
+const perfScoreVal = 0.7; //How accurate does the note have to be to count as perfect [0-2]
 
 //scope variables
 var xdata = [];
@@ -184,83 +183,6 @@ $(document).ready(function () {
     hideTabs();
   });
 });
-
-function hideTabs() {
-  $newtab.hide();
-  $settingstab.hide();
-  $helptab.hide();
-  $resettab.hide();
-}
-
-function clearProgress() {
-  console.log("clearing progress");
-  var count = $(".scorelist").children().length;
-  for (let i = 1; i <= count; i++) {
-    Cookies.remove(i);
-  }
-}
-
-function loadCookies() {
-  //First load any saved settings
-  let firstvisit = false;
-  userMiddleNote = Cookies.get("middlenote");
-  if (userMiddleNote == undefined) {
-    firstvisit = true;
-    userMiddleNote = 57; //default to A3
-    Cookies.set("middlenote", userMiddleNote, { expires: 3650 });
-  }
-  $notesel.val(userMiddleNote);
-
-  //Then load Scores
-  var count = $(".scorelist").children().length;
-  for (let i = 1; i <= count; i++) {
-    let myScore = Cookies.get(i);
-    if (myScore != undefined) {
-      myScore = parseFloat(myScore);
-      $(".scorelist")
-        .children()
-        .eq(i)
-        .html(myScore.toFixed(myScore > 99.95 ? 0 : 1) + "%");
-    } else {
-      $(".scorelist").children().eq(i).html("--");
-    }
-  }
-
-  //let the page know if it is the user's first visit
-  return firstvisit;
-}
-
-function startSong() {
-  startTime = new Date().getTime();
-  let numNotes = notes.length;
-  let numRests = Math.floor(numNotes / restInterval);
-  finishTime = initialRest + numRests * timePerRest + numNotes * timePerNote + finishRest;
-}
-
-function stopSong() {
-  startTime = null;
-  gameCanvas.clearRect(0, 0, canvasWidth, canvasHeight);
-  window.cancelAnimationFrame(myAniReq);
-}
-
-function calcAvgPitch() {
-  let myPitch = 0;
-  var total = 0;
-  var minval = Infinity;
-  var maxval = -Infinity;
-  for (var i = 0; i < pitchArray.length; i++) {
-    tempval = pitchArray[i];
-    total += tempval;
-    if (tempval < minval) minval = tempval;
-    if (tempval > maxval) maxval = tempval;
-  }
-  if (pitchArray.length < pitchAvgLength) {
-    myPitch = total / pitchArray.length;
-  } else {
-    myPitch = (total - minval - maxval) / (pitchArray.length - 2);
-  }
-  return myPitch;
-}
 
 function renderFrame() {
   if (startTime != null) {
@@ -396,6 +318,83 @@ function renderFrame() {
       stopGame();
     }
   }
+}
+
+function hideTabs() {
+  $newtab.hide();
+  $settingstab.hide();
+  $helptab.hide();
+  $resettab.hide();
+}
+
+function clearProgress() {
+  console.log("clearing progress");
+  var count = $(".scorelist").children().length;
+  for (let i = 1; i <= count; i++) {
+    Cookies.remove(i);
+  }
+}
+
+function loadCookies() {
+  //First load any saved settings
+  let firstvisit = false;
+  userMiddleNote = Cookies.get("middlenote");
+  if (userMiddleNote == undefined) {
+    firstvisit = true;
+    userMiddleNote = 57; //default to A3
+    Cookies.set("middlenote", userMiddleNote, { expires: 3650 });
+  }
+  $notesel.val(userMiddleNote);
+
+  //Then load Scores
+  var count = $(".scorelist").children().length;
+  for (let i = 1; i <= count; i++) {
+    let myScore = Cookies.get(i);
+    if (myScore != undefined) {
+      myScore = parseFloat(myScore);
+      $(".scorelist")
+        .children()
+        .eq(i)
+        .html(myScore.toFixed(myScore > 99.95 ? 0 : 1) + "%");
+    } else {
+      $(".scorelist").children().eq(i).html("--");
+    }
+  }
+
+  //let the page know if it is the user's first visit
+  return firstvisit;
+}
+
+function startSong() {
+  startTime = new Date().getTime();
+  let numNotes = notes.length;
+  let numRests = Math.floor(numNotes / restInterval);
+  finishTime = initialRest + numRests * timePerRest + numNotes * timePerNote + finishRest;
+}
+
+function stopSong() {
+  startTime = null;
+  gameCanvas.clearRect(0, 0, canvasWidth, canvasHeight);
+  window.cancelAnimationFrame(myAniReq);
+}
+
+function calcAvgPitch() {
+  let myPitch = 0;
+  var total = 0;
+  var minval = Infinity;
+  var maxval = -Infinity;
+  for (var i = 0; i < pitchArray.length; i++) {
+    tempval = pitchArray[i];
+    total += tempval;
+    if (tempval < minval) minval = tempval;
+    if (tempval > maxval) maxval = tempval;
+  }
+  if (pitchArray.length < pitchAvgLength) {
+    myPitch = total / pitchArray.length;
+  } else {
+    myPitch = (total - minval - maxval) / (pitchArray.length - 2);
+  }
+  return myPitch;
 }
 
 async function getMedia() {
