@@ -33,14 +33,24 @@ button[disabled] {
   color: rgba(0, 0, 0, 0.15);
   background: rgba(0, 0, 0, 0.15);
 }
-button.showsettings {
-  padding: 3px;
+button.showsettings,
+button.showhelp {
+  display: block;
+  border-radius: 20px;
+  height: 40px;
+  width: 40px;
+  padding: 0;
+  text-align: center;
+  font-size: 20px;
+}
+svg {
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .board {
   width: 800px;
   height: 650px;
-  /* overflow: hidden; */
   /* border: 1px solid #000; */
   border-radius: 10px;
   margin-top: 2px;
@@ -89,14 +99,15 @@ button.showsettings {
   text-align: center;
   margin-left: auto;
   margin-right: auto;
-  margin-top: 5px;
+  margin-top: 10px;
   margin-bottom: 5px;
 }
 
 .infobox {
   display: flex;
-  width: min(400px, 90%);
-  height: auto;
+  justify-content: space-between;
+  width: 250px;
+  height: 45px;
   border: 3px solid black;
   border-radius: 8px;
   text-align: center;
@@ -108,14 +119,15 @@ button.showsettings {
   font: inherit;
 }
 .infotxt {
-  width: 30%;
   text-align: right;
   padding: 5px;
+  height: 35px;
 }
 .infoval {
-  width: 20%;
-  text-align: left;
+  width: 70px;
+  text-align: center;
   padding: 5px;
+  height: 35px;
 }
 
 canvas#game {
@@ -151,6 +163,23 @@ canvas#staff {
   padding: 20px;
   font: inherit;
 }
+::-webkit-scrollbar {
+  width: 12px; /* width of the entire scrollbar */
+}
+::-webkit-scrollbar-track {
+  background: grey; /* color of the tracking area */
+}
+::-webkit-scrollbar-thumb {
+  background-color: white; /* color of the scroll thumb */
+  border-radius: 20px; /* roundness of the scroll thumb */
+  border: 3px solid black; /* creates padding around scroll thumb */
+}
+* {
+  /* for firefox */
+  scrollbar-width: thin;
+  scrollbar-color: black grey;
+}
+
 .columngrid {
   display: flex;
   justify-content: center;

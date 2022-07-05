@@ -2,6 +2,7 @@
 /// <reference path="../typings/globals/jquery/index.d.ts" />
 
 //TODO:
+//better colors for buttons/score
 //custom level generator
 //try different tone generator library to see if it is better
 //see if we can improve pitch detection. maybe allow settings to adjust some of the detector settings.
@@ -204,10 +205,11 @@ function loadCookies() {
   for (let i = 1; i <= count; i++) {
     let myScore = Cookies.get(i);
     if (myScore != undefined) {
+      myScore = parseFloat(myScore);
       $(".scorelist")
         .children()
         .eq(i)
-        .html(myScore + "%");
+        .html(myScore.toFixed(myScore > 99.95 ? 0 : 1) + "%");
     } else {
       $(".scorelist").children().eq(i).html("--");
     }
@@ -270,6 +272,7 @@ function renderFrame() {
       let myWidth = noteWidth;
       let myHeight = rowHeight * 0.8;
       if (myX > -noteWidth && myX < canvasWidth) {
+        //only draw the notes that are on screen
         gameCanvas.fillStyle = myColor;
         gameCanvas.beginPath();
         gameCanvas.rect(myX, myY, myWidth, myHeight);
@@ -327,8 +330,10 @@ function renderFrame() {
     prevNote = currentNote;
 
     //update game info
-    $score.html(Math.round(currentScore * 10) / 10 + "%");
-    $progress.html(Math.round(currentProgress * 10) / 10 + "%");
+    let scorestr = currentScore.toFixed(currentScore > 99.95 ? 0 : 1) + "%";
+    let progstr = currentProgress.toFixed(currentProgress > 99.95 ? 0 : 1) + "%";
+    $score.html(scorestr);
+    $progress.html(progstr);
 
     //draw scope
     let xdata_shift = xdata.map((x) => x - dt * ppms);
