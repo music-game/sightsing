@@ -636,10 +636,37 @@ async function getMedia() {
   if (stream == null) {
     try {
       audioContext = new AudioContext();
+
       stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: false,
       });
+
+      let preferedID = "default";
+      let preferedLabel = "headset";
+
+      let devices = await navigator.mediaDevices.enumerateDevices();
+      console.log(devices);
+      for (let i = 0; i < devices.length; i++) {
+        if (devices[i].kind == "audioinput") {
+          if (devices[i].label.includes(preferedLabel)) {
+            preferedID = devices[i].deviceId;
+          }
+        }
+      }
+
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          deviceId: preferedID,
+          autoGainControl: { exact: false },
+          noiseSuppression: { exact: false },
+          echoCancellation: { exact: false },
+        },
+        video: false,
+      });
+
+      console.log("connected to: " + stream.getAudioTracks()[0].label);
+
       // Create an AudioNode from the stream.
       mediaStreamSource = audioContext.createMediaStreamSource(stream);
       sampleRate = audioContext.sampleRate;
