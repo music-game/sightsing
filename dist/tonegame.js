@@ -70,6 +70,13 @@ var ydata = [];
 
 //store piano
 var sfPiano = null;
+var ac = null;
+
+async function startPiano() {
+  //initialize the soundfont upon page load
+  audioContext = new AudioContext();
+  sfPiano = await Soundfont.instrument(audioContext, "acoustic_grand_piano");
+}
 
 $(document).ready(function () {
   //find jquery elements
@@ -116,6 +123,9 @@ $(document).ready(function () {
   // piano = Synth.createInstrument("piano");
   // Synth.setSampleRate(48000); // sets sample rate [Hz]
   // Synth.setVolume(0.5); // set volume [0-1]
+
+  //initialize the sound font
+  startPiano();
 
   //load cookies
   let firstvisit = loadCookies();
@@ -420,7 +430,7 @@ function stopGame() {
     });
     console.log("stopping mic");
     stream = null;
-    audioContext.close();
+    // audioContext.close();
   }
   //save score
   let bestScore = Cookies.get(selectedLevel);
@@ -636,29 +646,28 @@ function playNote(noteNum) {
 async function getMedia() {
   if (stream == null) {
     try {
-      audioContext = new AudioContext();
+      // audioContext = new AudioContext();
 
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: false,
-      });
+      // stream = await navigator.mediaDevices.getUserMedia({
+      //   audio: true,
+      //   video: false,
+      // });
 
-      let preferedID = "default";
-      let preferedLabel = "headset";
+      // let preferedID = "default";
+      // let preferedLabel = "headset";
 
-      let devices = await navigator.mediaDevices.enumerateDevices();
-      console.log(devices);
-      for (let i = 0; i < devices.length; i++) {
-        if (devices[i].kind == "audioinput") {
-          if (devices[i].label.includes(preferedLabel)) {
-            preferedID = devices[i].deviceId;
-          }
-        }
-      }
+      // let devices = await navigator.mediaDevices.enumerateDevices();
+      // console.log(devices);
+      // for (let i = 0; i < devices.length; i++) {
+      //   if (devices[i].kind == "audioinput") {
+      //     if (devices[i].label.includes(preferedLabel)) {
+      //       preferedID = devices[i].deviceId;
+      //     }
+      //   }
+      // }
 
       stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          deviceId: preferedID,
           autoGainControl: { exact: false },
           noiseSuppression: { exact: false },
           echoCancellation: { exact: false },
@@ -671,7 +680,7 @@ async function getMedia() {
       // Create an AudioNode from the stream.
       mediaStreamSource = audioContext.createMediaStreamSource(stream);
       sampleRate = audioContext.sampleRate;
-      console.log(sampleRate);
+      console.log("sample rate: " + sampleRate);
 
       // Connect it to the destination.
       analyser = audioContext.createAnalyser();
