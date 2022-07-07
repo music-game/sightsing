@@ -792,14 +792,16 @@ function calcAvgPitch() {
   if (maxval - minval < 5) {
     myPitch = pitchArray[len - 1];
   } else {
-    console.log("jumpy");
+    console.log("jumpy: " + pitchArray);
     //if it is jumpy, then use the median of the values
     myPitch = median(pitchArray);
   }
   return myPitch;
 
-  function median(values) {
-    if (values.length === 0) throw new Error("No inputs");
+  function median(origValues) {
+    if (origValues.length === 0) throw new Error("No inputs");
+    //create array copy
+    let values = [...origValues];
 
     values.sort(function (a, b) {
       return a - b;
