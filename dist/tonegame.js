@@ -118,7 +118,7 @@ $(document).ready(function () {
   let firstvisit = loadCookies();
   if (firstvisit) {
     hideTabs();
-    $helptab.show();
+    $helptab.slideDown();
   }
 
   $stopgame.click(function () {
@@ -128,7 +128,7 @@ $(document).ready(function () {
   $newgame.click(function () {
     hideTabs();
     loadCookies();
-    $newtab.show();
+    $newtab.slideDown();
   });
 
   $startgame.click(function () {
@@ -137,8 +137,8 @@ $(document).ready(function () {
   });
 
   $("button.customlevel").click(function () {
-    $customtab.show();
-    $levelgrid.hide();
+    $customtab.slideDown();
+    $levelgrid.slideUp();
     $(this).addClass("active").removeClass("inactive");
     $("button.standardlevel").addClass("inactive").removeClass("active");
   });
@@ -156,8 +156,8 @@ $(document).ready(function () {
   });
 
   $("button.standardlevel").click(function () {
-    $levelgrid.show();
-    $customtab.hide();
+    $levelgrid.slideDown();
+    $customtab.slideUp();
     $(this).addClass("active").removeClass("inactive");
     $("button.customlevel").addClass("inactive").removeClass("active");
   });
@@ -186,11 +186,11 @@ $(document).ready(function () {
   $showsettings.click(function () {
     hideTabs();
     loadCookies();
-    $settingstab.show();
+    $settingstab.slideDown();
   });
 
   $("button.resetprog").click(function () {
-    $resettab.show();
+    $resettab.slideDown();
   });
 
   $("button.confirmreset").click(function () {
@@ -200,7 +200,7 @@ $(document).ready(function () {
 
   $("button.showhelp").click(function () {
     hideTabs();
-    $helptab.show();
+    $helptab.slideDown();
   });
 
   $("button.closetab").click(function () {
@@ -699,10 +699,10 @@ async function getMedia() {
 }
 
 function hideTabs() {
-  $newtab.hide();
-  $settingstab.hide();
-  $helptab.hide();
-  $resettab.hide();
+  $newtab.slideUp();
+  $settingstab.slideUp();
+  $helptab.slideUp();
+  $resettab.slideUp();
 }
 
 function clearProgress() {
