@@ -68,6 +68,9 @@ const perfScoreVal = 0.7; //How accurate does the note have to be to count as pe
 var xdata = [];
 var ydata = [];
 
+//store piano
+var sfPiano = null;
+
 $(document).ready(function () {
   //find jquery elements
   $staff = $("#staff");
@@ -109,10 +112,10 @@ $(document).ready(function () {
   canvasLeftMargin = Math.min(200, Math.round(canvasWidth / 2));
   drawStaff();
 
-  //initialize the synthesizer upon page load
-  piano = Synth.createInstrument("piano");
-  Synth.setSampleRate(48000); // sets sample rate [Hz]
-  Synth.setVolume(0.5); // set volume [0-1]
+  // //initialize the synthesizer upon page load
+  // piano = Synth.createInstrument("piano");
+  // Synth.setSampleRate(48000); // sets sample rate [Hz]
+  // Synth.setVolume(0.5); // set volume [0-1]
 
   //load cookies
   let firstvisit = loadCookies();
@@ -603,28 +606,25 @@ function genMelody() {
 }
 
 function playCadence() {
-  //play the cadance
-  playNote(tonic);
-  playNote(tonic + 4);
-  playNote(tonic + 7);
-  setTimeout(function () {
-    playNote(tonic);
-    playNote(tonic + 5);
-    playNote(tonic + 9);
-  }, 1000);
-  setTimeout(function () {
-    playNote(tonic - 1);
-    playNote(tonic + 2);
-    playNote(tonic + 7);
-  }, 2000);
-  setTimeout(function () {
-    playNote(tonic);
-    playNote(tonic + 4);
-    playNote(tonic + 7);
-  }, 3000);
-  setTimeout(function () {
-    playNote(tonic);
-  }, 4000);
+  const noteDur = 0.8;
+  const noteDel = 0.8;
+  const volume = 5;
+
+  sfPiano.schedule(audioContext.currentTime, [
+    { time: noteDel * 0, note: tonic, duration: noteDur, gain: volume },
+    { time: noteDel * 0, note: tonic + 4, duration: noteDur, gain: volume },
+    { time: noteDel * 0, note: tonic + 7, duration: noteDur, gain: volume },
+    { time: noteDel * 1, note: tonic, duration: noteDur, gain: volume },
+    { time: noteDel * 1, note: tonic + 5, duration: noteDur, gain: volume },
+    { time: noteDel * 1, note: tonic + 9, duration: noteDur, gain: volume },
+    { time: noteDel * 2, note: tonic - 1, duration: noteDur, gain: volume },
+    { time: noteDel * 2, note: tonic + 2, duration: noteDur, gain: volume },
+    { time: noteDel * 2, note: tonic + 7, duration: noteDur, gain: volume },
+    { time: noteDel * 3, note: tonic, duration: noteDur, gain: volume },
+    { time: noteDel * 3, note: tonic + 4, duration: noteDur, gain: volume },
+    { time: noteDel * 3, note: tonic + 7, duration: noteDur, gain: volume },
+    { time: noteDel * 4, note: tonic, duration: noteDur * 2, gain: volume },
+  ]);
 }
 
 function playNote(noteNum) {
@@ -686,6 +686,8 @@ async function getMedia() {
         ratio: 5,
         sensitivity: 0.1,
       });
+
+      sfPiano = await Soundfont.instrument(audioContext, "acoustic_grand_piano");
 
       return true;
     } catch (err) {
