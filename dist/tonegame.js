@@ -45,6 +45,7 @@ var pitchArray = [];
 var arrowPosition = 250; //position of the arrow at start of game. Updates as game is played
 const pitchFoundThresh = 5; //how many samples have to be null before we consider no pitch found
 var pitchFound = 0; //countdown until we consider no pitch found (resets to pitchFoundThresh when detected)
+var myPitch = 0; //tracks the current pitch
 
 //song variables
 var notes = []; //8=tonic
@@ -71,12 +72,6 @@ var ydata = [];
 //store piano
 var sfPiano = null;
 var ac = null;
-
-async function startPiano() {
-  //initialize the soundfont upon page load
-  audioContext = new AudioContext();
-  sfPiano = await Soundfont.instrument(audioContext, "acoustic_grand_piano");
-}
 
 $(document).ready(function () {
   //find jquery elements
@@ -119,13 +114,8 @@ $(document).ready(function () {
   canvasLeftMargin = Math.min(200, Math.round(canvasWidth / 2));
   drawStaff();
 
-  // //initialize the synthesizer upon page load
-  // piano = Synth.createInstrument("piano");
-  // Synth.setSampleRate(48000); // sets sample rate [Hz]
-  // Synth.setVolume(0.5); // set volume [0-1]
-
-  //initialize the sound font
-  startPiano();
+  //initialize the audiocontext
+  audioContext = new AudioContext();
 
   //load cookies
   let firstvisit = loadCookies();
@@ -264,7 +254,7 @@ function renderFrame() {
     //calculate current pitch
     let noteScaled = null;
     if (pitchArray.length > 0) {
-      let myPitch = calcAvgPitch();
+      calcAvgPitch();
       if (DEBUG) $debuginfo.html(noteNameFromNum(Math.round(myPitch)));
       noteScaled = canvasHeight - 10 - (myPitch - tonic + 12) * rowHeight;
       arrowPosition = Math.min(Math.max(noteScaled, 0), canvasHeight); //clip to available canvas
@@ -615,25 +605,27 @@ function genMelody() {
   }
 }
 
-function playCadence() {
+async function playCadence() {
   const noteDur = 0.8;
   const noteDel = 0.8;
-  const volume = 5;
+  const volume = 10;
+  const detune = -0.2;
+  sfPiano = await Soundfont.instrument(audioContext, "acoustic_grand_piano", { soundfont: "MusyngKite" });
 
   sfPiano.schedule(audioContext.currentTime, [
-    { time: noteDel * 0, note: tonic, duration: noteDur, gain: volume },
-    { time: noteDel * 0, note: tonic + 4, duration: noteDur, gain: volume },
-    { time: noteDel * 0, note: tonic + 7, duration: noteDur, gain: volume },
-    { time: noteDel * 1, note: tonic, duration: noteDur, gain: volume },
-    { time: noteDel * 1, note: tonic + 5, duration: noteDur, gain: volume },
-    { time: noteDel * 1, note: tonic + 9, duration: noteDur, gain: volume },
-    { time: noteDel * 2, note: tonic - 1, duration: noteDur, gain: volume },
-    { time: noteDel * 2, note: tonic + 2, duration: noteDur, gain: volume },
-    { time: noteDel * 2, note: tonic + 7, duration: noteDur, gain: volume },
-    { time: noteDel * 3, note: tonic, duration: noteDur, gain: volume },
-    { time: noteDel * 3, note: tonic + 4, duration: noteDur, gain: volume },
-    { time: noteDel * 3, note: tonic + 7, duration: noteDur, gain: volume },
-    { time: noteDel * 4, note: tonic, duration: noteDur * 2, gain: volume },
+    { time: noteDel * 0, note: detune + tonic, duration: noteDur, gain: volume },
+    { time: noteDel * 0, note: detune + tonic + 4, duration: noteDur, gain: volume },
+    { time: noteDel * 0, note: detune + tonic + 7, duration: noteDur, gain: volume },
+    { time: noteDel * 1, note: detune + tonic, duration: noteDur, gain: volume },
+    { time: noteDel * 1, note: detune + tonic + 5, duration: noteDur, gain: volume },
+    { time: noteDel * 1, note: detune + tonic + 9, duration: noteDur, gain: volume },
+    { time: noteDel * 2, note: detune + tonic - 1, duration: noteDur, gain: volume },
+    { time: noteDel * 2, note: detune + tonic + 2, duration: noteDur, gain: volume },
+    { time: noteDel * 2, note: detune + tonic + 7, duration: noteDur, gain: volume },
+    { time: noteDel * 3, note: detune + tonic, duration: noteDur, gain: volume },
+    { time: noteDel * 3, note: detune + tonic + 4, duration: noteDur, gain: volume },
+    { time: noteDel * 3, note: detune + tonic + 7, duration: noteDur, gain: volume },
+    { time: noteDel * 4, note: detune + tonic, duration: noteDur * 2, gain: volume },
   ]);
 }
 
@@ -778,7 +770,6 @@ function updatePitch() {
 }
 
 function calcAvgPitch() {
-  let myPitch = 0;
   let jump = 0;
   let len = pitchArray.length;
   var minval = 15; //minimum jump
@@ -793,25 +784,7 @@ function calcAvgPitch() {
     myPitch = pitchArray[len - 1];
   } else {
     console.log("jumpy: " + pitchArray);
-    //if it is jumpy, then use the median of the values
-    myPitch = median(pitchArray);
-  }
-  return myPitch;
-
-  function median(origValues) {
-    if (origValues.length === 0) throw new Error("No inputs");
-    //create array copy
-    let values = [...origValues];
-
-    values.sort(function (a, b) {
-      return a - b;
-    });
-
-    var half = Math.floor(values.length / 2);
-
-    if (values.length % 2) return values[half];
-
-    return (values[half - 1] + values[half]) / 2.0;
+    //if it is jumpy, then hold previous value until jumping stops
   }
 }
 
