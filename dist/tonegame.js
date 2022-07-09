@@ -802,9 +802,10 @@ function loadCookies() {
     userMiddleNote = parseInt(Cookies.get("middlenote"));
   }
 
-  noteNamingConvention = parseInt(Cookies.get("namingconvention"));
+  noteNamingConvention = Cookies.get("namingconvention");
   if (noteNamingConvention == undefined) {
-    Cookies.set("namingconvention", 0, { expires: 3650 });
+    noteNamingConvention = 0;
+    Cookies.set("namingconvention", noteNamingConvention, { expires: 3650 });
   } else {
     noteNamingConvention = parseInt(Cookies.get("namingconvention"));
   }
@@ -876,6 +877,7 @@ function drawStaff() {
   const indexkey = [1, 0, 2, 0, 3, 4, 0, 5, 0, 6, 0, 7]; //used to look up note name positions in noteNamings array
 
   //update the noteNamings array to correctly draw the note names on the notes
+  console.log("naming Convention: " + noteNamingConvention);
   switch (noteNamingConvention) {
     case 0: //soflege
       noteNamings = [" ", "Do", "Re", "Mi", "Fa", "Sol", "La", "Ti"];
@@ -885,6 +887,7 @@ function drawStaff() {
       break;
     case 2: //letters
       let key = tonic % 12; //key C=0, C#=1 ... B=11
+      console.log("Key = " + key);
       switch (key) {
         case 0: //C
           noteNamings = [" ", "C", "D", "E", "F", "G", "A", "B"];
