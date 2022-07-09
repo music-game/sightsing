@@ -276,6 +276,19 @@ function renderFrame() {
       }
       //reset the score array if we are on a new note
       currentScoreArray = [];
+
+      //update the total score and progress
+      let totalScore = 0;
+      for (var i = 0; i < currentNoteIndex; i++) {
+        totalScore = totalScore + noteScoresArray[i];
+      }
+      currentScore = (totalScore / noteScoresArray.length) * 100;
+      currentProgress = 100 * (Math.max(currentNoteIndex, 0) / notes.length);
+
+      let scorestr = currentScore.toFixed(currentScore > 99.95 ? 0 : 1) + "%";
+      let progstr = currentProgress.toFixed(currentProgress > 99.95 ? 0 : 1) + "%";
+      $score.html(scorestr);
+      $progress.html(progstr);
     }
 
     //If not currently on a rest, calculate how much we are currently scoring
@@ -302,23 +315,19 @@ function renderFrame() {
       }
     }
 
-    //update the total score and progress so far
-    let totalScore = 0;
-    for (var i = 0; i < noteScoresArray.length; i++) {
-      totalScore = totalScore + noteScoresArray[i];
-    }
-    currentScore = (totalScore / noteScoresArray.length) * 100;
-    if (currentNote == 0) {
-      //when on a rest, just figure out how many notes we've had so far
-      currentProgress = 100 * (Math.max(currentNoteIndex, 0) / notes.length);
-    } else {
-      //when on a note, make sure the progress for that note only includes the amount scored so far
-      currentProgress = (100 * (currentNoteIndex + noteScoresArray[currentNoteIndex])) / notes.length;
-    }
-    let scorestr = currentScore.toFixed(currentScore > 99.95 ? 0 : 1) + "%";
-    let progstr = currentProgress.toFixed(currentProgress > 99.95 ? 0 : 1) + "%";
-    $score.html(scorestr);
-    $progress.html(progstr);
+    // //update the total score and progress so far
+    // let totalScore = 0;
+    // for (var i = 0; i < noteScoresArray.length; i++) {
+    //   totalScore = totalScore + noteScoresArray[i];
+    // }
+    // currentScore = (totalScore / noteScoresArray.length) * 100;
+    // if (currentNote == 0) {
+    //   //when on a rest, just figure out how many notes we've had so far
+    //   currentProgress = 100 * (Math.max(currentNoteIndex, 0) / notes.length);
+    // } else {
+    //   //when on a note, make sure the progress for that note only includes the amount scored so far
+    //   currentProgress = (100 * (currentNoteIndex + noteScoresArray[currentNoteIndex])) / notes.length;
+    // }
 
     //clear old canvas
     gameCanvas.clearRect(0, 0, canvasWidth, canvasHeight);
@@ -451,22 +460,22 @@ async function startGame(newgame, custom) {
       playCadence();
       setTimeout(function () {
         startSong();
-        myAniReq = window.requestAnimationFrame(drawGame);
-        $stopgame.prop("disabled", false);
       }, 5000);
     } else {
       startSong();
-      myAniReq = window.requestAnimationFrame(drawGame);
-      $stopgame.prop("disabled", false);
     }
   }
 }
 
 function startSong() {
+  $score.html("0.0%");
+  $progress.html("0.0%");
   startTime = new Date().getTime();
   let numNotes = notes.length;
   let numRests = Math.floor(numNotes / restInterval);
   finishTime = initialRest + numRests * timePerRest + numNotes * timePerNote + finishRest;
+  myAniReq = window.requestAnimationFrame(drawGame);
+  $stopgame.prop("disabled", false);
 }
 
 function stopGame() {
