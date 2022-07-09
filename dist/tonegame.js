@@ -36,7 +36,6 @@ var stream = null;
 var analyser = null;
 var mediaStreamSource = null;
 var detectPitch = null;
-var piano = null;
 const noteStrings = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
 //pitch variables
@@ -49,18 +48,21 @@ var myPitch = 0; //tracks the current pitch
 
 //song variables
 var notes = []; //8=tonic
+var noteScoresArray = []; //tracks scores for each note
 var tonic = null; //C4=60
 var userMiddleNote = 57;
 var startTime = null;
 var finishTime = null;
 var time = null;
 var currentNote = 0;
-var prevNote = 0;
+var currentNoteIndex = -1;
+var noteFraction = 0; //how far into the current note we are
+var prevNoteIndex = -1;
 var selectedLevel = 0;
 var restInterval = 4; //notes between each rest
 
 //scoring variables
-var noteScoreArray = [];
+var currentScoreArray = [];
 var currentScore = 0;
 var currentProgress = 0;
 const perfScoreVal = 0.7; //How accurate does the note have to be to count as perfect [0-2]
@@ -218,40 +220,36 @@ function renderFrame() {
     time = new Date().getTime();
     let dt = time - startTime;
 
-    //clear old canvas
-    gameCanvas.clearRect(0, 0, canvasWidth, canvasHeight);
-
-    //draw notes
-    currentNote = 0;
-    let noteCenter = -100;
-    gameCanvas.lineWidth = 1;
-    gameCanvas.strokeStyle = "black";
-    for (let i = 0; i < notes.length; i++) {
-      let myNote = notes[i];
-      let myNoteRel = ((myNote - 1) % 7) + 1;
-      let myColor = noteColors[myNoteRel - 1];
-      let numRests = Math.floor(i / restInterval);
-      let myX = canvasLeftMargin + (initialRest + numRests * timePerRest - dt) * ppms + i * noteWidth;
-      let myY = canvasHeight - notePosition[myNote] * rowHeight + (rowHeight - noteHeight) / 2;
-      let myWidth = noteWidth;
-      let myHeight = rowHeight * 0.8;
-      if (myX > -noteWidth && myX < canvasWidth) {
-        //only draw the notes that are on screen
-        gameCanvas.fillStyle = myColor;
-        gameCanvas.beginPath();
-        gameCanvas.rect(myX, myY, myWidth, myHeight);
-        gameCanvas.fill();
-        gameCanvas.stroke();
-        gameCanvas.fillStyle = "black";
-        gameCanvas.font = "16px Arial";
-        gameCanvas.fillText(myNoteRel, myX + 10, myY + 14);
-      }
-      //see if the note is currently the active note
-      if (myX < canvasLeftMargin && myX + myWidth > canvasLeftMargin) {
-        currentNote = myNote;
-        noteCenter = myY + noteHeight / 2;
+    //figure out current note, index, and fraction complete
+    if (dt < initialRest) {
+      //if we are before the first note...
+      currentNoteIndex = -1;
+      currentNote = 0;
+      noteFraction = 0; //reset the noteFraction
+      prevNoteIndex = -1;
+    } else if (dt > finishTime - finishRest) {
+      //if we are past the last note...
+      currentNoteIndex = notes.length;
+      currentNote = 0;
+      noteFraction = 0;
+    } else {
+      let measureTime = restInterval * timePerNote + timePerRest; // time for each group of notes + 1 rest
+      let measureNum = Math.floor((dt - initialRest) / measureTime); //which measure we are in (starts at 0)
+      let noteWithinMeasure = Math.floor((dt - initialRest - measureNum * measureTime) / timePerNote); //note within measure (starts at 0)
+      if (noteWithinMeasure < restInterval) {
+        //means we are actually on a note
+        currentNoteIndex = measureNum * restInterval + noteWithinMeasure;
+        currentNote = notes[currentNoteIndex];
+        noteFraction = (dt - initialRest - measureNum * measureTime - noteWithinMeasure * timePerNote) / timePerNote;
+      } else {
+        //currently on a rest
+        currentNoteIndex = (measureNum + 1) * restInterval; //advance the index to the next note even if currently resting
+        currentNote = 0; //0 if on a rest
+        noteFraction = 0; //reset the noteFraction
       }
     }
+    // console.log("Index = " + currentNoteIndex + ", Note = " + currentNote + ", Fraction = " + noteFraction);
+
     //calculate current pitch
     let noteScaled = null;
     if (pitchArray.length > 0) {
@@ -264,40 +262,94 @@ function renderFrame() {
     xdata.push(canvasLeftMargin + dt * ppms);
     ydata.push(noteScaled);
 
-    //calculate whether it is currently scoring
-    let scoring = 0;
-    if (arrowPosition < noteCenter + 5 && arrowPosition > noteCenter - 5 && pitchFound > 0) {
-      scoring = 2;
-    } else if (arrowPosition < noteCenter + 10 && arrowPosition > noteCenter - 10 && pitchFound > 0) {
-      scoring = 1;
-    }
-    //if current note is new, then calculate the previous note's score
-    if (currentNote != prevNote) {
-      if (prevNote > 0) {
-        // only score the previous note if it was not a rest
+    //when we reach a new note....
+    if (currentNoteIndex > 0 && currentNoteIndex != prevNoteIndex) {
+      if (noteScoresArray[prevNoteIndex] < 1 && currentScoreArray.length < 0) {
+        //check final scoring on previous note if it was not already perfect
         let noteScore = 0;
-        for (var i = 0; i < noteScoreArray.length; i++) {
-          noteScore = noteScore + noteScoreArray[i];
+        for (var i = 0; i < currentScoreArray.length; i++) {
+          noteScore = noteScore + currentScoreArray[i];
         }
-        noteScore = Math.min(noteScore / noteScoreArray.length, perfScoreVal); //don't let it go over the max score value
-        //scale it to a percentage of the total
-        let scaledScore = ((noteScore / perfScoreVal) * 100) / notes.length;
-        currentScore = currentScore + scaledScore;
-        currentProgress = currentProgress + 100 / notes.length;
+        noteScore = noteScore / currentScoreArray.length; //average of all frames [0-2]
+        noteScore = Math.min(noteScore / perfScoreVal, 1); //scale by perfect score value, but limit to 1 max [0-1]
+        noteScoresArray[prevNoteIndex] = noteScore; //store the score for the previous note
       }
-      noteScoreArray = [];
+      //reset the score array if we are on a new note
+      currentScoreArray = [];
     }
-    //then append the new score if we are not on a rest currently
-    if (currentNote > 0) {
-      noteScoreArray.push(scoring);
-    }
-    prevNote = currentNote;
 
-    //update game info
+    //If not currently on a rest, calculate how much we are currently scoring
+    let scoring = 0;
+    if (currentNote > 0) {
+      let noteCenter = canvasHeight - notePosition[currentNote] * rowHeight + rowHeight / 2; //Calculate center of current note
+      if (arrowPosition < noteCenter + 5 && arrowPosition > noteCenter - 5 && pitchFound > 0) {
+        scoring = 2; //score double if within the middle half of the note
+      } else if (arrowPosition < noteCenter + 10 && arrowPosition > noteCenter - 10 && pitchFound > 0) {
+        scoring = 1;
+      }
+      currentScoreArray.push(scoring);
+
+      //calculate the total score so far for this note
+      let noteScore = 0;
+      if (currentScoreArray.length > 0) {
+        for (var i = 0; i < currentScoreArray.length; i++) {
+          noteScore = noteScore + currentScoreArray[i];
+        }
+        noteScore = noteScore / currentScoreArray.length; //average of all frames so far [0-2]
+        noteScore = noteScore * noteFraction; //scale by how far into the note we are [0-2]
+        noteScore = Math.min(noteScore / perfScoreVal, 1); //scale by perfect score value, but limit to 1 max [0-1]
+        noteScoresArray[currentNoteIndex] = noteScore; //store the score for this note
+      }
+    }
+
+    //update the total score and progress so far
+    let totalScore = 0;
+    for (var i = 0; i < noteScoresArray.length; i++) {
+      totalScore = totalScore + noteScoresArray[i];
+    }
+    currentScore = (totalScore / noteScoresArray.length) * 100;
+    if (currentNote == 0) {
+      //when on a rest, just figure out how many notes we've had so far
+      currentProgress = 100 * (Math.max(currentNoteIndex, 0) / notes.length);
+    } else {
+      //when on a note, make sure the progress for that note only includes the amount scored so far
+      currentProgress = (100 * (currentNoteIndex + noteScoresArray[currentNoteIndex])) / notes.length;
+    }
     let scorestr = currentScore.toFixed(currentScore > 99.95 ? 0 : 1) + "%";
     let progstr = currentProgress.toFixed(currentProgress > 99.95 ? 0 : 1) + "%";
     $score.html(scorestr);
     $progress.html(progstr);
+
+    //clear old canvas
+    gameCanvas.clearRect(0, 0, canvasWidth, canvasHeight);
+
+    //draw notes
+    gameCanvas.lineWidth = 1;
+    gameCanvas.strokeStyle = "black";
+    for (let i = 0; i < notes.length; i++) {
+      let numRests = Math.floor(i / restInterval);
+      let myX = canvasLeftMargin + (initialRest + numRests * timePerRest - dt) * ppms + i * noteWidth;
+      //only draw the notes that are on screen
+      if (myX > -noteWidth && myX < canvasWidth) {
+        let myNote = notes[i];
+        let myNoteRel = ((myNote - 1) % 7) + 1;
+        let myColor = "white"; //if note was perfected draw it white
+        if (noteScoresArray[i] < 1) {
+          myColor = noteColors[myNoteRel - 1];
+        }
+        let myY = canvasHeight - notePosition[myNote] * rowHeight + (rowHeight - noteHeight) / 2;
+        let myWidth = noteWidth;
+        let myHeight = rowHeight * 0.8;
+        gameCanvas.fillStyle = myColor;
+        gameCanvas.beginPath();
+        gameCanvas.rect(myX, myY, myWidth, myHeight);
+        gameCanvas.fill();
+        gameCanvas.stroke();
+        gameCanvas.fillStyle = "black";
+        gameCanvas.font = "16px Arial";
+        gameCanvas.fillText(myNoteRel, myX + 10, myY + 14);
+      }
+    }
 
     //draw scope
     let xdata_shift = xdata.map((x) => x - dt * ppms);
@@ -328,7 +380,7 @@ function renderFrame() {
     //draw arrow
     if (scoring > 0) {
       gameCanvas.strokeStyle = "black";
-      gameCanvas.fillStyle = "green";
+      gameCanvas.fillStyle = "white";
     } else {
       gameCanvas.strokeStyle = "black";
       gameCanvas.fillStyle = "black";
@@ -341,6 +393,9 @@ function renderFrame() {
     gameCanvas.lineTo(canvasLeftMargin, arrowPosition);
     gameCanvas.fill();
     gameCanvas.stroke();
+
+    //set prevNoteIndex for next frame
+    prevNoteIndex = currentNoteIndex;
 
     //see if the game is over
     if (dt > finishTime && !DEBUG) {
@@ -360,7 +415,7 @@ async function startGame(newgame, custom) {
     //reset everything
     currentScore = 0;
     currentProgress = 0;
-    prevNote = 0;
+    prevNoteIndex = 0;
     xdata = [];
     ydata = [];
     pitchFound = 0;
@@ -369,7 +424,7 @@ async function startGame(newgame, custom) {
     if (newgame || notes.length < 1) {
       if (custom) {
         $infotxt.html("Score:");
-        genMelody();
+        genMelody(); //generate the melody notes
       } else {
         let level = selectedLevel;
         $infotxt.html("Level " + level + ":");
@@ -377,6 +432,8 @@ async function startGame(newgame, custom) {
         getMelody(level); //generate the melody notes
       }
     }
+    noteScoresArray = new Array(notes.length).fill(0); //reset the note scoring tracker
+    currentScoreArray = []; //reset the note score array
 
     //set the tonic to get midpoint = userMiddleNote
     let maxNote = Math.max(...notes);
@@ -627,7 +684,7 @@ async function playCadence() {
   const noteDur = 0.8;
   const noteDel = 0.8;
   const volume = 10;
-  const detune = -0.2;
+  const detune = -0.1;
   sfPiano = await Soundfont.instrument(audioContext, "acoustic_grand_piano", { soundfont: "MusyngKite" });
 
   sfPiano.schedule(audioContext.currentTime, [
@@ -645,12 +702,6 @@ async function playCadence() {
     { time: noteDel * 3, note: detune + tonic + 7, duration: noteDur, gain: volume },
     { time: noteDel * 4, note: detune + tonic, duration: noteDur * 2, gain: volume },
   ]);
-}
-
-function playNote(noteNum) {
-  let noteName = noteStrings[noteNum % 12];
-  let noteNumber = Math.floor(noteNum / 12) - 1;
-  piano.play(noteName, noteNumber, 2);
 }
 
 async function getMedia() {
@@ -706,7 +757,7 @@ async function getMedia() {
         sensitivity: 0.1,
       });
 
-      sfPiano = await Soundfont.instrument(audioContext, "acoustic_grand_piano");
+      // sfPiano = await Soundfont.instrument(audioContext, "acoustic_grand_piano");
 
       return true;
     } catch (err) {
