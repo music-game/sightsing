@@ -18,6 +18,7 @@ const finishRest = 2000; //ms
 const staffColors = ["LimeGreen", "gray", "salmon", "gray", "yellow", "DeepSkyBlue", "gray", "crimson", "gray", "orange", "gray", "violet"];
 const noteColors = ["LimeGreen", "salmon", "yellow", "DeepSkyBlue", "crimson", "orange", "violet"];
 const notePosition = [0, 1, 3, 5, 6, 8, 10, 12, 13, 15, 17, 18, 20, 22, 24, 25];
+var noteNamings = null;
 const rowHeight = 20;
 const noteWidth = timePerNote * ppms;
 const noteHeight = 16;
@@ -27,7 +28,7 @@ var staffCanvas, gameCanvas, canvasWidth, dpr;
 var myAniReq = null;
 
 //jquery variables
-var $score, $progress, $staff, $game, $board, $startgame, $newgame, $stopgame, $resettab, $customtab;
+var $score, $progress, $staff, $game, $board, $startgame, $newgame, $stopgame, $resettab, $customtab, $namingsel;
 var $notesel, $debuginfo, $newtab, $settingstab, $helptab, $showsettings, $scorelist, $levelgrid, $infotxt;
 
 //variables for audiocontext and playing tones
@@ -49,8 +50,9 @@ var myPitch = 0; //tracks the current pitch
 //song variables
 var notes = []; //8=tonic
 var noteScoresArray = []; //tracks scores for each note
-var tonic = null; //C4=60
+var tonic = 60; //C4=60
 var userMiddleNote = 57;
+var noteNamingConvention = 0; //0=solfege, 1=numbers, 2=letters
 var startTime = null;
 var finishTime = null;
 var time = null;
@@ -96,6 +98,7 @@ $(document).ready(function () {
   $customtab = $(".customtab");
   $levelgrid = $(".levelgrid");
   $infotxt = $(".infotxt");
+  $namingsel = $(".namingsel");
 
   dpr = window.devicePixelRatio || 1;
   let w = window.innerWidth;
@@ -115,7 +118,6 @@ $(document).ready(function () {
   staffCanvas = $staff[0].getContext("2d");
   staffCanvas.scale(dpr, dpr);
   canvasLeftMargin = Math.min(200, Math.round(canvasWidth / 2));
-  drawStaff();
 
   //initialize the audiocontext
   audioContext = new AudioContext();
@@ -126,6 +128,8 @@ $(document).ready(function () {
     hideTabs();
     $helptab.slideDown();
   }
+
+  drawStaff();
 
   $stopgame.click(function () {
     stopGame();
@@ -186,7 +190,11 @@ $(document).ready(function () {
     userMiddleNote = parseInt($notesel.val());
     console.log("Middle Note: " + userMiddleNote);
     Cookies.set("middlenote", userMiddleNote, { expires: 3650 });
+    noteNamingConvention = parseInt($namingsel.val());
+    console.log("Note Naming Convention: " + noteNamingConvention);
+    Cookies.set("namingconvention", noteNamingConvention, { expires: 3650 });
     hideTabs();
+    drawStaff();
   });
 
   $showsettings.click(function () {
@@ -315,20 +323,6 @@ function renderFrame() {
       }
     }
 
-    // //update the total score and progress so far
-    // let totalScore = 0;
-    // for (var i = 0; i < noteScoresArray.length; i++) {
-    //   totalScore = totalScore + noteScoresArray[i];
-    // }
-    // currentScore = (totalScore / noteScoresArray.length) * 100;
-    // if (currentNote == 0) {
-    //   //when on a rest, just figure out how many notes we've had so far
-    //   currentProgress = 100 * (Math.max(currentNoteIndex, 0) / notes.length);
-    // } else {
-    //   //when on a note, make sure the progress for that note only includes the amount scored so far
-    //   currentProgress = (100 * (currentNoteIndex + noteScoresArray[currentNoteIndex])) / notes.length;
-    // }
-
     //clear old canvas
     gameCanvas.clearRect(0, 0, canvasWidth, canvasHeight);
 
@@ -356,7 +350,7 @@ function renderFrame() {
         gameCanvas.stroke();
         gameCanvas.fillStyle = "black";
         gameCanvas.font = "16px Arial";
-        gameCanvas.fillText(myNoteRel, myX + 10, myY + 14);
+        gameCanvas.fillText(noteNamings[myNoteRel], myX + 10, myY + 14);
       }
     }
 
@@ -449,6 +443,7 @@ async function startGame(newgame, custom) {
     let minNote = Math.min(...notes);
     let midPoint = Math.round((notePosition[maxNote] + notePosition[minNote]) / 2);
     tonic = userMiddleNote - (midPoint - notePosition[8]);
+    drawStaff();
     console.log("Middle Note: " + noteNameFromNum(userMiddleNote));
     console.log("Tonic Note: " + noteNameFromNum(tonic));
     console.log("Notes: " + notes.map((x) => noteNameFromNum(notePosition[x] - notePosition[8] + tonic)));
@@ -797,6 +792,7 @@ function clearProgress() {
 function loadCookies() {
   //First load any saved settings
   let firstvisit = false;
+
   userMiddleNote = Cookies.get("middlenote");
   if (userMiddleNote == undefined) {
     firstvisit = true;
@@ -805,7 +801,16 @@ function loadCookies() {
   } else {
     userMiddleNote = parseInt(Cookies.get("middlenote"));
   }
+
+  noteNamingConvention = parseInt(Cookies.get("namingconvention"));
+  if (noteNamingConvention == undefined) {
+    Cookies.set("namingconvention", 0, { expires: 3650 });
+  } else {
+    noteNamingConvention = parseInt(Cookies.get("namingconvention"));
+  }
+
   $notesel.val(userMiddleNote);
+  $namingsel.val(noteNamingConvention);
 
   //Then load Scores
   var count = $(".scorelist").children().length;
@@ -868,7 +873,59 @@ function calcAvgPitch() {
 
 function drawStaff() {
   staffCanvas.clearRect(0, 0, canvasWidth, canvasHeight);
-  const numbers = ["1", " ", "2", " ", "3", "4", " ", "5", " ", "6", " ", "7"];
+  const indexkey = [1, 0, 2, 0, 3, 4, 0, 5, 0, 6, 0, 7]; //used to look up note name positions in noteNamings array
+
+  //update the noteNamings array to correctly draw the note names on the notes
+  switch (noteNamingConvention) {
+    case 0: //soflege
+      noteNamings = [" ", "Do", "Re", "Mi", "Fa", "Sol", "La", "Ti"];
+      break;
+    case 1: //numbers
+      noteNamings = [" ", "1", "2", "3", "4", "5", "6", "7"];
+      break;
+    case 2: //letters
+      let key = tonic % 12; //key C=0, C#=1 ... B=11
+      switch (key) {
+        case 0: //C
+          noteNamings = [" ", "C", "D", "E", "F", "G", "A", "B"];
+          break;
+        case 1: //Db
+          noteNamings = [" ", "Db", "Eb", "F", "Gb", "Ab", "Bb", "C"];
+          break;
+        case 2: //D
+          noteNamings = [" ", "D", "E", "F#", "G", "A", "B", "C#"];
+          break;
+        case 3: //Eb
+          noteNamings = [" ", "Eb", "F", "G", "Ab", "Bb", "C", "D"];
+          break;
+        case 4: //E
+          noteNamings = [" ", "E", "F#", "G#", "A", "B", "C#", "D#"];
+          break;
+        case 5: //F
+          noteNamings = [" ", "F", "G", "A", "Bb", "C", "D", "E"];
+          break;
+        case 6: //F#
+          noteNamings = [" ", "F#", "G#", "A#", "B", "C#", "D#", "E#"];
+          break;
+        case 7: //G
+          noteNamings = [" ", "G", "A", "B", "C", "D", "E", "F#"];
+          break;
+        case 8: //Ab
+          noteNamings = [" ", "Ab", "Bb", "C", "Db", "Eb", "F", "G"];
+          break;
+        case 9: //A
+          noteNamings = [" ", "A", "B", "C#", "D", "E", "F#", "G#"];
+          break;
+        case 10: //Bb
+          noteNamings = [" ", "Bb", "C", "D", "Eb", "F", "G", "A"];
+          break;
+        case 11: //B
+          noteNamings = [" ", "B", "C#", "D#", "E", "F#", "G#", "A#"];
+          break;
+      }
+      break;
+  }
+
   const rows = 25;
   for (let i = 0; i < rows; i++) {
     staffCanvas.fillStyle = staffColors[i % 12];
@@ -877,7 +934,7 @@ function drawStaff() {
     staffCanvas.fillStyle = "black";
     staffCanvas.font = "18px Arial";
     staffCanvas.globalAlpha = 1;
-    staffCanvas.fillText(numbers[i % 12], 10, (rows - i) * rowHeight - 4);
+    staffCanvas.fillText(noteNamings[indexkey[i % 12]], 10, (rows - i) * rowHeight - 4);
   }
   staffCanvas.globalAlpha = 1;
   staffCanvas.fillStyle = "black";

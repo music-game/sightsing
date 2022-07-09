@@ -6,10 +6,10 @@
     <title>Sight-Singer</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
-    <link rel="stylesheet" href="./dist/style.css?version=13" />
-    <script src="dist/tonegame.js?version=13"></script>
-    <script src="dist/soundfont-player.js?version=13"></script>
-    <script src="dist/pitchdetector.js?version=13"></script>
+    <link rel="stylesheet" href="./dist/style.css?version=14" />
+    <script src="dist/tonegame.js?version=14"></script>
+    <script src="dist/soundfont-player.js?version=14"></script>
+    <script src="dist/pitchdetector.js?version=14"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Righteous&display=swap" rel="stylesheet" />
@@ -209,6 +209,7 @@
         <div class="columngrid">
           <div class="widecolumn">
             <div class="settingtext">Middle of Your Comfortable Vocal Range:</div>
+            <div class="settingtext">Note Naming:</div>
           </div>
           <div class="narrowcolumn">
             <div class="settingtext">
@@ -224,6 +225,13 @@
                 <option value="55">G3</option>
                 <option value="53">F3</option>
                 <option value="52">E3</option>
+              </select>
+            </div>
+            <div class="settingtext">
+              <select class="namingsel">
+                <option value="0">Solfège</option>
+                <option value="1">Numbers</option>
+                <option value="2">Letters</option>
               </select>
             </div>
           </div>
@@ -256,7 +264,7 @@
           <h2>How to Play</h2>
           <p>
             When the level begins, you will hear some chords to help establish the key. Then you will hear the tonic note, which corresponds to the
-            note labeled "1" in the center of the gameboard. You will then need to sing the notes that appear on the gameboard. Each note is numbered
+            green note in the center of the gameboard. You will then need to sing the notes that appear on the gameboard. Each note is numbered
             relative to the tonic note.
           </p>
           <p>
@@ -264,13 +272,13 @@
             correct note.
           </p>
           <p>
-            You can hum the note, sing the number of the note, or just sing a vowel of your choice (like ooh or aah). There are breaks to take breaths
+            You can hum the note, sing the name of the note, or just sing a vowel of your choice (like ooh or aah). There are breaks to take breaths
             after every four notes.
           </p>
           <h2>Scoring</h2>
           <p>
             Your score for each note is determined by how long you remain on the note and how accurate your pitch is, up to a maximum. The note will
-            turn white once you've reached the maximum score for that note.
+            turn white once you reach the maximum score for that note.
           </p>
           <h2>Starting a Game</h2>
           <p>
