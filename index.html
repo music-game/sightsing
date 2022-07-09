@@ -6,10 +6,10 @@
     <title>Sight-Singer</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
-    <link rel="stylesheet" href="./dist/style.css?version=9" />
-    <script src="dist/tonegame.js?version=9"></script>
-    <script src="dist/soundfont-player.js?version=9"></script>
-    <script src="dist/pitchdetector.js?version=9"></script>
+    <link rel="stylesheet" href="./dist/style.css?version=10" />
+    <script src="dist/tonegame.js?version=10"></script>
+    <script src="dist/soundfont-player.js?version=10"></script>
+    <script src="dist/pitchdetector.js?version=10"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Righteous&display=swap" rel="stylesheet" />
@@ -64,8 +64,8 @@
           <div class="columngrid">
             <div class="columndata">
               <div class="subtitle">Parameter</div>
-              <div class="settingtext">Lowest Note:</div>
               <div class="settingtext">Highest Note:</div>
+              <div class="settingtext">Lowest Note:</div>
               <div class="settingtext">Notes Allowed:</div>
               <div class="settingtext">Max Jump:</div>
               <div class="settingtext">Melody Length:</div>
@@ -76,17 +76,17 @@
             <div class="columndata">
               <div class="subtitle">Selection</div>
               <div class="settingtext">
-                <select class="minsel">
-                  <option value="0" selected="true">8th Below Tonic</option>
-                  <option value="1">5th Below Tonic</option>
-                  <option value="2">Tonic</option>
-                </select>
-              </div>
-              <div class="settingtext">
                 <select class="maxsel">
                   <option value="0">Tonic</option>
                   <option value="1">5th Above Tonic</option>
                   <option value="2" selected="true">8th Above Tonic</option>
+                </select>
+              </div>
+              <div class="settingtext">
+                <select class="minsel">
+                  <option value="0" selected="true">8th Below Tonic</option>
+                  <option value="1">5th Below Tonic</option>
+                  <option value="2">Tonic</option>
                 </select>
               </div>
               <div class="settingtext">
@@ -167,9 +167,19 @@
             <button class="levelsel" value="13">Level 13</button>
             <button class="levelsel" value="14">Level 14</button>
             <button class="levelsel" value="15">Level 15</button>
+            <button class="levelsel" value="16">Level 16</button>
+            <button class="levelsel" value="17">Level 17</button>
+            <button class="levelsel" value="18">Level 18</button>
+            <button class="levelsel" value="19">Level 19</button>
+            <button class="levelsel" value="20">Level 20</button>
           </div>
           <div class="columndata scorelist">
             <div class="subtitle">Best Score</div>
+            <div class="bestscore">--</div>
+            <div class="bestscore">--</div>
+            <div class="bestscore">--</div>
+            <div class="bestscore">--</div>
+            <div class="bestscore">--</div>
             <div class="bestscore">--</div>
             <div class="bestscore">--</div>
             <div class="bestscore">--</div>

@@ -28,7 +28,7 @@ var myAniReq = null;
 
 //jquery variables
 var $score, $progress, $staff, $game, $board, $startgame, $newgame, $stopgame, $resettab, $customtab;
-var $notesel, $debuginfo, $newtab, $settingstab, $helptab, $showsettings, $scorelist, $levelgrid;
+var $notesel, $debuginfo, $newtab, $settingstab, $helptab, $showsettings, $scorelist, $levelgrid, $infotxt;
 
 //variables for audiocontext and playing tones
 var audioContext = null;
@@ -93,6 +93,7 @@ $(document).ready(function () {
   $scorelist = $(".scorelist");
   $customtab = $(".customtab");
   $levelgrid = $(".levelgrid");
+  $infotxt = $(".infotxt");
 
   dpr = window.devicePixelRatio || 1;
   let w = window.innerWidth;
@@ -367,9 +368,11 @@ async function startGame(newgame, custom) {
     $progress.html("--");
     if (newgame || notes.length < 1) {
       if (custom) {
+        $infotxt.html("Score:");
         genMelody();
       } else {
         let level = selectedLevel;
+        $infotxt.html("Level " + level + ":");
         console.log("Level: " + level);
         getMelody(level); //generate the melody notes
       }
@@ -463,27 +466,42 @@ function getMelody(level) {
       notes = [8, 5, 3, 1, 2, 3, 4, 5, 8, 7, 6, 5, 3, 1, 5, 8, 5, 6, 7, 8];
       break;
     case 8:
-      notes = [1, 3, 5, 8, 10, 12, 11, 10, 9, 8, 7, 6, 5, 8, 12, 8, 5, 1, 3, 5, 8];
+      notes = [8, 9, 10, 12, 15, 14, 13, 12, 8, 15, 12, 10, 9, 8, 12, 13, 14, 15, 12, 8];
       break;
     case 9:
-      notes = [5, 8, 10, 8, 10, 12, 15, 14, 13, 12, 8, 7, 6, 5, 8, 9, 10, 11, 12, 8];
+      notes = [8, 7, 6, 5, 3, 2, 1, 5, 7, 8, 1, 3, 2, 5, 6, 7, 1, 5, 6, 7, 8];
       break;
     case 10:
-      notes = [8, 11, 12, 15, 14, 13, 8, 7, 6, 5, 12, 10, 8, 5, 7, 8, 15, 14, 13, 8];
+      notes = [8, 10, 12, 10, 8, 5, 3, 1, 3, 5, 8, 12, 8, 5, 8, 3, 8, 12, 10, 8];
       break;
     case 11:
-      notes = [8, 4, 2, 1, 3, 4, 5, 7, 8, 9, 11, 10, 8, 6, 4, 2, 1, 3, 5, 7, 8];
+      notes = [1, 3, 5, 8, 10, 12, 8, 1, 5, 12, 8, 3, 10, 5, 8, 12, 10, 5, 1, 8];
       break;
     case 12:
-      notes = [5, 3, 8, 7, 6, 4, 2, 1, 8, 12, 15, 14, 13, 8, 1, 3, 4, 11, 9, 8];
+      notes = [5, 8, 10, 8, 10, 12, 15, 14, 13, 12, 8, 7, 6, 5, 8, 9, 10, 11, 12, 8];
       break;
     case 13:
-      notes = [12, 9, 11, 12, 15, 8, 1, 3, 10, 5, 7, 8, 15, 12, 8, 3, 2, 1, 5, 8];
+      notes = [1, 3, 5, 8, 10, 12, 11, 10, 9, 8, 7, 6, 5, 8, 12, 8, 5, 1, 3, 5, 8];
       break;
     case 14:
-      notes = [8, 14, 10, 7, 2, 5, 10, 15, 13, 6, 2, 1, 6, 4, 5, 8, 11, 4, 6, 7, 8];
+      notes = [8, 11, 12, 15, 14, 13, 8, 7, 6, 5, 12, 10, 8, 5, 7, 8, 15, 14, 13, 8];
       break;
     case 15:
+      notes = [8, 4, 2, 1, 3, 4, 5, 7, 8, 9, 11, 10, 8, 6, 4, 2, 1, 3, 5, 7, 8];
+      break;
+    case 16:
+      notes = [8, 11, 8, 13, 8, 4, 8, 2, 8, 14, 8, 5, 8, 10, 13, 8, 6, 4, 2, 1];
+      break;
+    case 17:
+      notes = [5, 3, 8, 7, 6, 4, 2, 1, 8, 12, 15, 14, 13, 8, 1, 3, 4, 11, 9, 8];
+      break;
+    case 18:
+      notes = [12, 9, 11, 12, 15, 8, 1, 3, 10, 5, 7, 8, 15, 12, 8, 3, 2, 1, 5, 8];
+      break;
+    case 19:
+      notes = [8, 14, 10, 7, 2, 5, 10, 15, 13, 6, 2, 1, 6, 4, 5, 8, 11, 4, 6, 7, 8];
+      break;
+    case 20:
       notes = [2, 6, 3, 12, 9, 3, 5, 12, 15, 9, 3, 7, 12, 14, 15, 12, 7, 8, 14, 7, 4, 8];
       break;
   }
@@ -584,8 +602,8 @@ function genMelody() {
           lowNote++;
           lowestIndex = possibleNotes.indexOf(lowNote);
         }
-        //pick a note index between the current note-1 and lowNote
-        thisNote = possibleNotes[getRandomInt(thisNoteIndex - 1, lowestIndex)];
+        //pick a note index between the current lownote and note-1
+        thisNote = possibleNotes[getRandomInt(lowestIndex, thisNoteIndex - 1)];
       }
       //if force return to tonic is set, override with the tonic
       if ((i + 1) % returntonic == 0) {
