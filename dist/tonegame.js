@@ -890,8 +890,8 @@ function drawStaff() {
 }
 
 function drawGame() {
-  renderFrame();
   updatePitch();
+  renderFrame();
   myAniReq = window.requestAnimationFrame(drawGame);
 }
 
