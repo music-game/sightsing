@@ -466,6 +466,8 @@ async function startGame(newgame, custom) {
 
       //play the cadence and start song
       playCadence();
+    } else {
+      stopGame();
     }
   } else {
     console.log("game already started");
