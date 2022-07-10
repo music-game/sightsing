@@ -744,6 +744,7 @@ async function getMedia() {
       //initialize the audiocontext
       var AudioContext = window.AudioContext || window.webkitAudioContext;
       audioContext = new AudioContext();
+      unlockAudioContext(audioContext);
 
       stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -776,11 +777,24 @@ async function getMedia() {
       });
       return true;
     } catch (err) {
+      console.log(err);
       console.log("failed to get stream");
       alert(
         "Can't access microphone. Make sure you allow microphone access, and nothing else is using the microphone. \nIf this still doesn't work, you may need to reload the page and/or restart your device."
       );
       return false;
+    }
+  }
+  function unlockAudioContext(audioCtx) {
+    if (audioCtx.state !== "suspended") return;
+    const b = document.body;
+    const events = ["touchstart", "touchend", "mousedown", "keydown"];
+    events.forEach((e) => b.addEventListener(e, unlock, false));
+    function unlock() {
+      audioCtx.resume().then(clean);
+    }
+    function clean() {
+      events.forEach((e) => b.removeEventListener(e, unlock));
     }
   }
 }
