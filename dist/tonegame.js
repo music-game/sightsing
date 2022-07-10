@@ -3,7 +3,6 @@
 //© Copyright 2022 · IMACS - Institute for Mathematics & Computer Science
 
 const DEBUG = false;
-window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
 //canvas constants
 const canvasHeight = 500; //px
@@ -743,6 +742,7 @@ async function getMedia() {
   if (stream == null) {
     try {
       //initialize the audiocontext
+      var AudioContext = window.AudioContext || window.webkitAudioContext;
       audioContext = new AudioContext();
 
       stream = await navigator.mediaDevices.getUserMedia({
