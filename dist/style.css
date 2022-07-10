@@ -278,3 +278,11 @@ select {
   border: 1px solid #ccc;
   height: 40px;
 }
+.copyright {
+  position: absolute;
+  transform: translate(-50%, 0);
+  width: min(250px, 80%);
+  font-size: 12px;
+  bottom: 10px;
+  left: 50%;
+}

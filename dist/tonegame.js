@@ -1,5 +1,7 @@
 /// <reference path="../typings/globals/jquery/index.d.ts" />
 
+//© Copyright 2022 · IMACS - Institute for Mathematics & Computer Science
+
 const DEBUG = false;
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
@@ -272,7 +274,7 @@ function renderFrame() {
 
     //when we reach a new note....
     if (currentNoteIndex > 0 && currentNoteIndex != prevNoteIndex) {
-      if (noteScoresArray[prevNoteIndex] < 1 && currentScoreArray.length < 0) {
+      if (noteScoresArray[prevNoteIndex] < 1 && currentScoreArray.length > 0) {
         //check final scoring on previous note if it was not already perfect
         let noteScore = 0;
         for (var i = 0; i < currentScoreArray.length; i++) {
@@ -281,22 +283,12 @@ function renderFrame() {
         noteScore = noteScore / currentScoreArray.length; //average of all frames [0-2]
         noteScore = Math.min(noteScore / perfScoreVal, 1); //scale by perfect score value, but limit to 1 max [0-1]
         noteScoresArray[prevNoteIndex] = noteScore; //store the score for the previous note
+
+        //update the total score and progress
+        updateScore(0);
       }
       //reset the score array if we are on a new note
       currentScoreArray = [];
-
-      //update the total score and progress
-      let totalScore = 0;
-      for (var i = 0; i < currentNoteIndex; i++) {
-        totalScore = totalScore + noteScoresArray[i];
-      }
-      currentScore = (totalScore / noteScoresArray.length) * 100;
-      currentProgress = 100 * (Math.max(currentNoteIndex, 0) / notes.length);
-
-      let scorestr = currentScore.toFixed(currentScore > 99.95 ? 0 : 1) + "%";
-      let progstr = currentProgress.toFixed(currentProgress > 99.95 ? 0 : 1) + "%";
-      $score.html(scorestr);
-      $progress.html(progstr);
     }
 
     //If not currently on a rest, calculate how much we are currently scoring
@@ -312,7 +304,8 @@ function renderFrame() {
 
       //calculate the total score so far for this note
       let noteScore = 0;
-      if (currentScoreArray.length > 0) {
+      //only calculate if it's not already maxed out
+      if (currentScoreArray.length > 0 && noteScoresArray[currentNoteIndex] < 1) {
         for (var i = 0; i < currentScoreArray.length; i++) {
           noteScore = noteScore + currentScoreArray[i];
         }
@@ -320,6 +313,8 @@ function renderFrame() {
         noteScore = noteScore * noteFraction; //scale by how far into the note we are [0-2]
         noteScore = Math.min(noteScore / perfScoreVal, 1); //scale by perfect score value, but limit to 1 max [0-1]
         noteScoresArray[currentNoteIndex] = noteScore; //store the score for this note
+        //update the total score and progress if the note is maxed out
+        if (noteScore == 1) updateScore(1);
       }
     }
 
@@ -404,6 +399,21 @@ function renderFrame() {
     if (dt > finishTime && !DEBUG) {
       stopGame();
     }
+  }
+
+  function updateScore(early = 0) {
+    //updates the total score and progress
+    let totalScore = 0;
+    for (var i = 0; i < currentNoteIndex + early; i++) {
+      totalScore = totalScore + noteScoresArray[i];
+    }
+    currentScore = (totalScore / noteScoresArray.length) * 100;
+    currentProgress = 100 * (Math.max(currentNoteIndex + early, 0) / notes.length);
+
+    let scorestr = currentScore.toFixed(currentScore > 99.95 ? 0 : 1) + "%";
+    let progstr = currentProgress.toFixed(currentProgress > 99.95 ? 0 : 1) + "%";
+    $score.html(scorestr);
+    $progress.html(progstr);
   }
 }
 
