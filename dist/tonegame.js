@@ -15,7 +15,8 @@ if (DEBUG) {
   timePerNote = 500; //ms
   timePerRest = 500; //ms
 }
-const initialRest = 1000; //ms
+const initialRest = 3000; //ms
+const tonicPlayTime = 2000; //ms
 const finishRest = 2000; //ms
 const staffColors = ["LimeGreen", "gray", "salmon", "gray", "yellow", "DeepSkyBlue", "gray", "crimson", "gray", "orange", "gray", "violet"];
 const noteColors = ["LimeGreen", "salmon", "yellow", "DeepSkyBlue", "crimson", "orange", "violet"];
@@ -27,7 +28,6 @@ const noteHeight = 16;
 
 //canvas/animation variables
 var staffCanvas, gameCanvas, canvasWidth, dpr;
-var myAniReq = null;
 
 //jquery variables
 var $score, $progress, $staff, $game, $board, $startgame, $newgame, $stopgame, $resettab, $customtab, $namingsel;
@@ -58,6 +58,7 @@ var noteNamingConvention = 0; //0=solfege, 1=numbers, 2=letters
 var startTime = null;
 var finishTime = null;
 var time = null;
+var gameRunning = false;
 var currentNote = 0;
 var currentNoteIndex = -1;
 var noteFraction = 0; //how far into the current note we are
@@ -74,10 +75,6 @@ const perfScoreVal = 0.7; //How accurate does the note have to be to count as pe
 //scope variables
 var xdata = [];
 var ydata = [];
-
-//store piano
-var sfPiano = null;
-var ac = null;
 
 $(document).ready(function () {
   //find jquery elements
@@ -121,9 +118,6 @@ $(document).ready(function () {
   staffCanvas.scale(dpr, dpr);
   canvasLeftMargin = Math.min(200, Math.round(canvasWidth / 2));
 
-  //initialize the audiocontext
-  audioContext = new AudioContext();
-
   //load cookies
   let firstvisit = loadCookies();
   if (firstvisit) {
@@ -133,19 +127,10 @@ $(document).ready(function () {
 
   drawStaff();
 
-  $stopgame.click(function () {
-    stopGame();
-  });
-
   $newgame.click(function () {
     hideTabs();
     loadCookies();
     $newtab.slideDown();
-  });
-
-  $startgame.click(function () {
-    hideTabs();
-    startGame(false, false);
   });
 
   $("button.customlevel").click(function () {
@@ -188,6 +173,16 @@ $(document).ready(function () {
     startGame(true, false);
   });
 
+  $startgame.click(function () {
+    //replay
+    hideTabs();
+    startGame(false, false);
+  });
+
+  $stopgame.click(function () {
+    stopGame();
+  });
+
   $("button.applysettings").click(function () {
     userMiddleNote = parseInt($notesel.val());
     console.log("Middle Note: " + userMiddleNote);
@@ -225,6 +220,7 @@ $(document).ready(function () {
 });
 
 function renderFrame() {
+  // console.log("frame");
   if (startTime != null) {
     //figure out time step since start of game
     time = new Date().getTime();
@@ -260,14 +256,20 @@ function renderFrame() {
     }
     // console.log("Index = " + currentNoteIndex + ", Note = " + currentNote + ", Fraction = " + noteFraction);
 
-    //calculate current pitch
+    //if during initial tonic playtime, draw the tonic for the pitch, otherwise, read the actual pitch
     let noteScaled = null;
-    if (pitchArray.length > 0) {
-      calcAvgPitch();
-      if (DEBUG) $debuginfo.html(noteNameFromNum(Math.round(myPitch)));
-      noteScaled = canvasHeight - 10 - (myPitch - tonic + 12) * rowHeight;
+    if (dt < tonicPlayTime) {
+      noteScaled = canvasHeight - 10 - 12 * rowHeight;
       arrowPosition = Math.min(Math.max(noteScaled, 0), canvasHeight); //clip to available canvas
-      //arrow Position only updates if pitchArray is not empty
+    } else {
+      //calculate current pitch
+      if (pitchArray.length > 0) {
+        calcAvgPitch();
+        if (DEBUG) $debuginfo.html(noteNameFromNum(Math.round(myPitch)));
+        noteScaled = canvasHeight - 10 - (myPitch - tonic + 12) * rowHeight;
+        arrowPosition = Math.min(Math.max(noteScaled, 0), canvasHeight); //clip to available canvas
+        //arrow Position only updates if pitchArray is not empty
+      }
     }
     xdata.push(canvasLeftMargin + dt * ppms);
     ydata.push(noteScaled);
@@ -418,57 +420,55 @@ function renderFrame() {
 }
 
 async function startGame(newgame, custom) {
-  let connection = false;
-  connection = await getMedia(); //get the microphone working
-  if (connection) {
-    stopSong();
-    $startgame.prop("disabled", true);
-    $newgame.prop("disabled", true);
-    $showsettings.prop("disabled", true);
-    //reset everything
-    currentScore = 0;
-    currentProgress = 0;
-    prevNoteIndex = 0;
-    xdata = [];
-    ydata = [];
-    pitchFound = 0;
-    $score.html("--");
-    $progress.html("--");
-    if (newgame || notes.length < 1) {
-      if (custom) {
-        $infotxt.html("Score:");
-        genMelody(); //generate the melody notes
-      } else {
-        let level = selectedLevel;
-        $infotxt.html("Level " + level + ":");
-        console.log("Level: " + level);
-        getMelody(level); //generate the melody notes
+  if (gameRunning == false) {
+    gameRunning = true;
+    let connection = false;
+    connection = await getMedia(); //get the microphone working
+    if (connection) {
+      stopSong();
+      $startgame.prop("disabled", true);
+      $newgame.prop("disabled", true);
+      $showsettings.prop("disabled", true);
+      //reset everything
+      currentScore = 0;
+      currentProgress = 0;
+      prevNoteIndex = 0;
+      xdata = [];
+      ydata = [];
+      pitchFound = 0;
+      $score.html("--");
+      $progress.html("--");
+      if (newgame || notes.length < 1) {
+        if (custom) {
+          $infotxt.html("Score:");
+          genMelody(); //generate the melody notes
+        } else {
+          let level = selectedLevel;
+          $infotxt.html("Level " + level + ":");
+          console.log("Level: " + level);
+          getMelody(level); //generate the melody notes
+        }
       }
-    }
-    noteScoresArray = new Array(notes.length).fill(0); //reset the note scoring tracker
-    currentScoreArray = []; //reset the note score array
+      noteScoresArray = new Array(notes.length).fill(0); //reset the note scoring tracker
+      currentScoreArray = []; //reset the note score array
 
-    //set the tonic to get midpoint = userMiddleNote
-    let maxNote = Math.max(...notes);
-    let minNote = Math.min(...notes);
-    let midPoint = Math.round((notePosition[maxNote] + notePosition[minNote]) / 2);
-    tonic = userMiddleNote - (midPoint - notePosition[8]);
-    drawStaff();
-    console.log("Middle Note: " + noteNameFromNum(userMiddleNote));
-    console.log("Tonic Note: " + noteNameFromNum(tonic));
-    console.log("Notes: " + notes.map((x) => noteNameFromNum(notePosition[x] - notePosition[8] + tonic)));
-    console.log(notes);
-    console.log("Number of Notes: " + notes.length);
+      //set the tonic to get midpoint = userMiddleNote
+      let maxNote = Math.max(...notes);
+      let minNote = Math.min(...notes);
+      let midPoint = Math.round((notePosition[maxNote] + notePosition[minNote]) / 2);
+      tonic = userMiddleNote - (midPoint - notePosition[8]);
+      drawStaff();
+      console.log("Middle Note: " + noteNameFromNum(userMiddleNote));
+      console.log("Tonic Note: " + noteNameFromNum(tonic));
+      console.log("Notes: " + notes.map((x) => noteNameFromNum(notePosition[x] - notePosition[8] + tonic)));
+      console.log(notes);
+      console.log("Number of Notes: " + notes.length);
 
-    //play the cadence
-    if (!DEBUG) {
+      //play the cadence and start song
       playCadence();
-      setTimeout(function () {
-        startSong();
-      }, 5000);
-    } else {
-      startSong();
     }
+  } else {
+    console.log("game already started");
   }
 }
 
@@ -479,7 +479,7 @@ function startSong() {
   let numNotes = notes.length;
   let numRests = Math.floor(numNotes / restInterval);
   finishTime = initialRest + numRests * timePerRest + numNotes * timePerNote + finishRest;
-  myAniReq = window.requestAnimationFrame(drawGame);
+  window.requestAnimationFrame(drawGame);
   $stopgame.prop("disabled", false);
 }
 
@@ -488,14 +488,7 @@ function stopGame() {
   $startgame.prop("disabled", false);
   $newgame.prop("disabled", false);
   $showsettings.prop("disabled", false);
-  if (stream != null) {
-    stream.getAudioTracks().forEach((track) => {
-      track.stop();
-    });
-    console.log("stopping mic");
-    stream = null;
-    // audioContext.close();
-  }
+  closeMedia();
   //save score
   let bestScore = Cookies.get(selectedLevel);
   if (bestScore == undefined || currentScore > bestScore) {
@@ -507,7 +500,7 @@ function stopGame() {
 function stopSong() {
   startTime = null;
   gameCanvas.clearRect(0, 0, canvasWidth, canvasHeight);
-  window.cancelAnimationFrame(myAniReq);
+  gameRunning = false;
 }
 
 function getMelody(level) {
@@ -573,7 +566,7 @@ function getMelody(level) {
       notes = [8, 14, 10, 7, 2, 5, 10, 15, 13, 6, 2, 1, 6, 4, 5, 8, 11, 4, 6, 7, 8];
       break;
     case 20:
-      notes = [2, 6, 3, 12, 9, 3, 5, 12, 15, 9, 3, 7, 12, 14, 15, 12, 7, 8, 14, 7, 4, 8];
+      notes = [8, 2, 6, 11, 15, 9, 3, 12, 7, 10, 1, 13, 4, 8, 14, 5, 8, 1, 15, 8];
       break;
   }
 }
@@ -695,51 +688,60 @@ function genMelody() {
 }
 
 async function playCadence() {
-  const noteDur = 0.8;
-  const noteDel = 0.8;
-  const volume = 10;
-  const detune = -0.1;
-  sfPiano = await Soundfont.instrument(audioContext, "acoustic_grand_piano", { soundfont: "MusyngKite" });
+  if (!DEBUG) {
+    const noteDur = 0.8;
+    const noteDel = 0.8;
+    const volume = 10;
+    const detune = -0.1;
+    let sfPiano = await Soundfont.instrument(audioContext, "acoustic_grand_piano", { soundfont: "MusyngKite" });
 
-  sfPiano.schedule(audioContext.currentTime, [
-    { time: noteDel * 0, note: detune + tonic, duration: noteDur, gain: volume },
-    { time: noteDel * 0, note: detune + tonic + 4, duration: noteDur, gain: volume },
-    { time: noteDel * 0, note: detune + tonic + 7, duration: noteDur, gain: volume },
-    { time: noteDel * 1, note: detune + tonic, duration: noteDur, gain: volume },
-    { time: noteDel * 1, note: detune + tonic + 5, duration: noteDur, gain: volume },
-    { time: noteDel * 1, note: detune + tonic + 9, duration: noteDur, gain: volume },
-    { time: noteDel * 2, note: detune + tonic - 1, duration: noteDur, gain: volume },
-    { time: noteDel * 2, note: detune + tonic + 2, duration: noteDur, gain: volume },
-    { time: noteDel * 2, note: detune + tonic + 7, duration: noteDur, gain: volume },
-    { time: noteDel * 3, note: detune + tonic, duration: noteDur, gain: volume },
-    { time: noteDel * 3, note: detune + tonic + 4, duration: noteDur, gain: volume },
-    { time: noteDel * 3, note: detune + tonic + 7, duration: noteDur, gain: volume },
-    { time: noteDel * 4, note: detune + tonic, duration: noteDur * 2, gain: volume },
-  ]);
+    sfPiano.schedule(audioContext.currentTime, [
+      { time: noteDel * 0, note: detune + tonic, duration: noteDur, gain: volume },
+      { time: noteDel * 0, note: detune + tonic + 4, duration: noteDur, gain: volume },
+      { time: noteDel * 0, note: detune + tonic + 7, duration: noteDur, gain: volume },
+      { time: noteDel * 1, note: detune + tonic, duration: noteDur, gain: volume },
+      { time: noteDel * 1, note: detune + tonic + 5, duration: noteDur, gain: volume },
+      { time: noteDel * 1, note: detune + tonic + 9, duration: noteDur, gain: volume },
+      { time: noteDel * 2, note: detune + tonic - 1, duration: noteDur, gain: volume },
+      { time: noteDel * 2, note: detune + tonic + 2, duration: noteDur, gain: volume },
+      { time: noteDel * 2, note: detune + tonic + 7, duration: noteDur, gain: volume },
+      { time: noteDel * 3, note: detune + tonic, duration: noteDur, gain: volume },
+      { time: noteDel * 3, note: detune + tonic + 4, duration: noteDur, gain: volume },
+      { time: noteDel * 3, note: detune + tonic + 7, duration: noteDur, gain: volume },
+      { time: noteDel * 4, note: detune + tonic, duration: tonicPlayTime / 1000, gain: volume },
+    ]);
+
+    setTimeout(function () {
+      startSong();
+    }, noteDel * 4 * 1000);
+  } else {
+    startSong();
+  }
+}
+
+function closeMedia() {
+  if (stream != null) {
+    stream.getAudioTracks().forEach((track) => {
+      track.stop();
+    });
+    console.log("stopping mic");
+    stream = null;
+  }
+  if (audioContext != null) {
+    if (audioContext.state != "closed") {
+      console.log("closing audiocontext");
+      audioContext.close();
+    }
+    audioContext = null;
+  }
 }
 
 async function getMedia() {
+  closeMedia();
   if (stream == null) {
     try {
-      // audioContext = new AudioContext();
-
-      // stream = await navigator.mediaDevices.getUserMedia({
-      //   audio: true,
-      //   video: false,
-      // });
-
-      // let preferedID = "default";
-      // let preferedLabel = "headset";
-
-      // let devices = await navigator.mediaDevices.enumerateDevices();
-      // console.log(devices);
-      // for (let i = 0; i < devices.length; i++) {
-      //   if (devices[i].kind == "audioinput") {
-      //     if (devices[i].label.includes(preferedLabel)) {
-      //       preferedID = devices[i].deviceId;
-      //     }
-      //   }
-      // }
+      //initialize the audiocontext
+      audioContext = new AudioContext();
 
       stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -770,14 +772,11 @@ async function getMedia() {
         ratio: 5,
         sensitivity: 0.1,
       });
-
-      // sfPiano = await Soundfont.instrument(audioContext, "acoustic_grand_piano");
-
       return true;
     } catch (err) {
       console.log("failed to get stream");
       alert(
-        "Can't access microphone. Make sure you allow microphone access, and nothing else is using the microphone. \nIf this still doesn't work, you may need to restart your device."
+        "Can't access microphone. Make sure you allow microphone access, and nothing else is using the microphone. \nIf this still doesn't work, you may need to reload the page and/or restart your device."
       );
       return false;
     }
@@ -962,7 +961,9 @@ function drawStaff() {
 function drawGame() {
   updatePitch();
   renderFrame();
-  myAniReq = window.requestAnimationFrame(drawGame);
+  if (startTime != null) {
+    window.requestAnimationFrame(drawGame);
+  }
 }
 
 function noteNumFromPitch(frequency) {
