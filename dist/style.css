@@ -286,3 +286,15 @@ select {
   bottom: 10px;
   left: 50%;
 }
+.tutorialtxt {
+  position: absolute;
+  text-align: center;
+  transform: translate(-50%, 0);
+  font-size: 20px;
+  color: black;
+  background-color: white;
+  top: 450px;
+  left: 50%;
+  width: min(80%, 640px);
+  z-index: 100;
+}

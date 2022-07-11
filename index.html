@@ -17,10 +17,10 @@
     <title>Sight-Singer</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
-    <link rel="stylesheet" href="./dist/style.css?version=20" />
-    <script src="dist/tonegame.js?version=20"></script>
-    <script src="dist/soundfont-player.js?version=20"></script>
-    <script src="dist/pitchdetector.js?version=20"></script>
+    <link rel="stylesheet" href="./dist/style.css?version=21" />
+    <script src="dist/tonegame.js?version=21"></script>
+    <script src="dist/soundfont-player.js?version=21"></script>
+    <script src="dist/pitchdetector.js?version=21"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Righteous&display=swap" rel="stylesheet" />
@@ -28,6 +28,7 @@
   <body>
     <div class="board">
       <div class="debuginfo"></div>
+      <div class="tutorialtxt" hidden="true"></div>
       <div class="titlebar">
         <button class="showsettings">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
@@ -163,6 +164,7 @@
         <div class="columngrid levelgrid">
           <div class="columndata">
             <div class="subtitle">Select Level</div>
+            <button class="levelsel" value="0">Tutorial</button>
             <button class="levelsel" value="1">Level 1</button>
             <button class="levelsel" value="2">Level 2</button>
             <button class="levelsel" value="3">Level 3</button>
@@ -186,6 +188,7 @@
           </div>
           <div class="columndata scorelist">
             <div class="subtitle">Best Score</div>
+            <div class="bestscore">--</div>
             <div class="bestscore">--</div>
             <div class="bestscore">--</div>
             <div class="bestscore">--</div>
@@ -271,7 +274,8 @@
           <h2>Setup</h2>
           <p>
             Before you play, be sure to open the settings and set the note closest to the middle of your comfortable vocal range. The melodies will
-            all be centered around this note. If you aren't sure, start with 'A3' for men or 'D4' for women.
+            all be centered around this note. If you aren't sure, start with 'A3' for men or 'D4' for women. You can adjust this up/down later if you
+            have trouble reaching the lowest/highest notes in the levels.
           </p>
           <h2>How to Play</h2>
           <p>
@@ -300,7 +304,8 @@
           <h2>Beginner Tips</h2>
           <p>
             The early levels all start on the tonic, which is the note you hear playing at the beginning of the level. At the start of the level, try
-            to match your singing pitch to the tonic note that you hear, then move up or down from there as needed.
+            to match your singing pitch to the tonic note that you hear, then move up or down from there as needed. Try the tutorial level for more
+            help.
           </p>
         </div>
         <button class="closetab">Close</button>

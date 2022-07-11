@@ -30,7 +30,7 @@ var staffCanvas, gameCanvas, canvasWidth, dpr;
 
 //jquery variables
 var $score, $progress, $staff, $game, $board, $startgame, $newgame, $stopgame, $resettab, $customtab, $namingsel;
-var $notesel, $debuginfo, $newtab, $settingstab, $helptab, $showsettings, $scorelist, $levelgrid, $infotxt;
+var $notesel, $debuginfo, $newtab, $settingstab, $helptab, $showsettings, $scorelist, $levelgrid, $infotxt, $tutorialtxt;
 
 //variables for audiocontext and playing tones
 var audioContext = null;
@@ -97,6 +97,7 @@ $(document).ready(function () {
   $levelgrid = $(".levelgrid");
   $infotxt = $(".infotxt");
   $namingsel = $(".namingsel");
+  $tutorialtxt = $(".tutorialtxt");
 
   dpr = window.devicePixelRatio || 1;
   let w = window.innerWidth;
@@ -159,7 +160,7 @@ $(document).ready(function () {
   });
 
   $("button.startcustom").click(function () {
-    selectedLevel = 0;
+    selectedLevel = -1;
     console.log("Level: Custom");
     hideTabs();
     startGame(true, true);
@@ -495,6 +496,10 @@ function stopGame() {
   if (bestScore == undefined || currentScore > bestScore) {
     Cookies.set(selectedLevel, Math.round(currentScore * 10) / 10, { expires: 3650 });
   }
+  if (selectedLevel == 0) {
+    Cookies.set("tutorial", "done", { expires: 3650 });
+  }
+  $tutorialtxt.hide();
   stopSong();
 }
 
@@ -509,10 +514,13 @@ function getMelody(level) {
   restInterval = 4;
   notes = [];
   switch (level) {
-    case 1: //start tonic, single steps, tonic to tonic+8
+    case 0: //tutorial
+      notes = [8, 8, 8, 8, 8, 9, 10, 11, 12, 13, 14, 15, 14, 13, 12, 11, 10, 9, 8, 8, 8, 10, 12, 15, 12, 10, 8];
+      break;
+    case 1:
       notes = [8, 9, 10, 11, 12, 13, 14, 15, 14, 13, 12, 11, 10, 9, 8];
       break;
-    case 2: //start tonic, single steps, tonic to tonic-8
+    case 2:
       notes = [8, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 8];
       break;
     case 3:
@@ -712,9 +720,33 @@ async function playCadence() {
       { time: noteDel * 4, note: detune + tonic, duration: tonicPlayTime / 1000, gain: volume },
     ]);
 
-    setTimeout(function () {
-      startSong();
-    }, noteDel * 4 * 1000);
+    if (selectedLevel == 0) {
+      //tutorial level - display the help text and also schedule the notes to play in the background
+      $tutorialtxt.show();
+      $tutorialtxt.html("First listen to these chords to get your ear tuned to the right key.");
+      setTimeout(function () {
+        startSong();
+        if (selectedLevel == 0) {
+          const noteKeyArr = [null, -12, -10, -8, -7, -5, -3, -1, 0, 2, 4, 5, 7, 9, 11, 12];
+          //play notes along with singing
+          for (let i = 0; i < notes.length; i++) {
+            let myTime = (initialRest + i * timePerNote + Math.floor(i / 4) * timePerRest) / 1000;
+            let myNote = detune + tonic + noteKeyArr[notes[i]];
+            sfPiano.schedule(audioContext.currentTime, [{ time: myTime, note: myNote, duration: timePerNote / 1000, gain: volume }]);
+          }
+          $tutorialtxt.html("This note is the tonic. Start by trying to match its pitch.");
+        }
+      }, noteDel * 4 * 1000);
+      setTimeout(function () {
+        $tutorialtxt.html(
+          "Now try to follow the pitch up and down. <br><br> In all other levels, you will have to sing this part without hearing the piano to guide you."
+        );
+      }, noteDel * 4 * 1000 + initialRest + timePerNote * 5);
+    } else {
+      setTimeout(function () {
+        startSong();
+      }, noteDel * 4 * 1000);
+    }
   } else {
     startSong();
   }
@@ -837,6 +869,11 @@ function loadCookies() {
   $notesel.val(userMiddleNote);
   $namingsel.val(noteNamingConvention);
 
+  //Check if tutorial is complete
+  let myTutorial = Cookies.get("tutorial");
+  if (myTutorial == undefined) $(".scorelist").children().eq(1).html("--");
+  else $(".scorelist").children().eq(1).html("Done");
+
   //Then load Scores
   var count = $(".scorelist").children().length;
   for (let i = 1; i <= count; i++) {
@@ -845,10 +882,13 @@ function loadCookies() {
       myScore = parseFloat(myScore);
       $(".scorelist")
         .children()
-        .eq(i)
+        .eq(i + 1)
         .html(myScore.toFixed(myScore > 99.95 ? 0 : 1) + "%");
     } else {
-      $(".scorelist").children().eq(i).html("--");
+      $(".scorelist")
+        .children()
+        .eq(i + 1)
+        .html("--");
     }
   }
 
