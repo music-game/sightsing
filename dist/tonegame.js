@@ -730,7 +730,7 @@ async function playCadence() {
           const noteKeyArr = [null, -12, -10, -8, -7, -5, -3, -1, 0, 2, 4, 5, 7, 9, 11, 12];
           //play notes along with singing
           for (let i = 0; i < notes.length; i++) {
-            let myTime = (initialRest + i * timePerNote + Math.floor(i / 4) * timePerRest) / 1000;
+            let myTime = (-300 + initialRest + i * timePerNote + Math.floor(i / 4) * timePerRest) / 1000;
             let myNote = detune + tonic + noteKeyArr[notes[i]];
             sfPiano.schedule(audioContext.currentTime, [{ time: myTime, note: myNote, duration: timePerNote / 1000, gain: volume }]);
           }
