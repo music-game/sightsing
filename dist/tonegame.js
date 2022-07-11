@@ -100,8 +100,9 @@ $(document).ready(function () {
   $tutorialtxt = $(".tutorialtxt");
 
   dpr = window.devicePixelRatio || 1;
+  console.log("device pixel ratio = " + dpr);
   let w = window.innerWidth;
-  canvasWidth = Math.min(w - 20, 800);
+  canvasWidth = Math.max(Math.min(w - 20, 800), 280); //bound canvas size between 280-800px
   $board.width(canvasWidth);
   $staff[0].width = canvasWidth * dpr;
   $game[0].width = canvasWidth * dpr;
@@ -496,7 +497,7 @@ function stopGame() {
   if (bestScore == undefined || currentScore > bestScore) {
     Cookies.set(selectedLevel, Math.round(currentScore * 10) / 10, { expires: 3650 });
   }
-  if (selectedLevel == 0) {
+  if (selectedLevel == 0 && currentProgress > 99) {
     Cookies.set("tutorial", "done", { expires: 3650 });
   }
   $tutorialtxt.hide();
@@ -734,12 +735,12 @@ async function playCadence() {
             let myNote = detune + tonic + noteKeyArr[notes[i]];
             sfPiano.schedule(audioContext.currentTime, [{ time: myTime, note: myNote, duration: timePerNote / 1000, gain: volume }]);
           }
-          $tutorialtxt.html("This note is the tonic. Start by trying to match its pitch.");
+          $tutorialtxt.html("This note is the tonic. Start by trying to sing this pitch.");
         }
       }, noteDel * 4 * 1000);
       setTimeout(function () {
         $tutorialtxt.html(
-          "Now try to follow the pitch up and down. <br><br> In all other levels, you will have to sing this part without hearing the piano to guide you."
+          "Now try to follow the pitch up and down as you sing. <br><br> In all other levels, you will have to sing this part without hearing the piano to guide you."
         );
       }, noteDel * 4 * 1000 + initialRest + timePerNote * 5);
     } else {
