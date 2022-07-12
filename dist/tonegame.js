@@ -919,22 +919,24 @@ function updatePitch() {
 }
 
 function calcAvgPitch() {
-  let jump = 0;
+  //try just using the latest pitch no matter what
   let len = pitchArray.length;
-  var minval = 15; //minimum jump
-  var maxval = -15; //maximum jump
-  for (var i = 1; i < len; i++) {
-    jump = pitchArray[i] - pitchArray[i - 1];
-    if (jump < minval) minval = jump;
-    if (jump > maxval) maxval = jump;
-  }
-  //if pitch isn't changing much, then use latest value
-  if (maxval - minval < 5) {
-    myPitch = pitchArray[len - 1];
-  } else {
-    console.log("jumpy: " + pitchArray);
-    //if it is jumpy, then hold previous value until jumping stops
-  }
+  myPitch = pitchArray[len - 1];
+  // let jump = 0;
+  // var minval = 15; //minimum jump
+  // var maxval = -15; //maximum jump
+  // for (var i = 1; i < len; i++) {
+  //   jump = pitchArray[i] - pitchArray[i - 1];
+  //   if (jump < minval) minval = jump;
+  //   if (jump > maxval) maxval = jump;
+  // }
+  // //if pitch isn't changing much, then use latest value
+  // if (maxval - minval < 5) {
+  //   myPitch = pitchArray[len - 1];
+  // } else {
+  //   console.log("jumpy: " + pitchArray);
+  //   //if it is jumpy, then hold previous value until jumping stops
+  // }
 }
 
 function drawStaff() {
